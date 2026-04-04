@@ -377,8 +377,32 @@ async function submitTip() {
     if (result.error) { showToast(result.error); }
     else {
       showToast('Tip submitted! 🎉');
+
+      // Update local state immediately — no loading screen needed
+      const round = data.currentRound;
+      const entrantID = data.currentUser.entrantID;
+      const team = state.selectedTeam;
+      const existingTipIndex = state.data.tips.findIndex(
+        t => t.entrantID === entrantID && t.round === round
+      );
+      if (existingTipIndex >= 0) {
+        // Replace existing tip in local state
+        state.data.tips[existingTipIndex].team = team;
+        state.data.tips[existingTipIndex].timestamp = new Date().toISOString();
+      } else {
+        // Add new tip to local state
+        state.data.tips.push({
+          tipID: 'local-' + Date.now(),
+          competitionID: 'COMP001',
+          entrantID,
+          email: user.email,
+          round,
+          team,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       setState({ changingTip: false, selectedTeam: null, submitting: false });
-      loadAppData(user.email);
       return;
     }
   } catch { showToast('Failed to submit. Try again.'); }
