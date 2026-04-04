@@ -172,7 +172,30 @@
     .you-badge { font-size: 0.65rem; color: var(--blue); font-weight: 600; margin-left: 4px; }
 
     /* Rules */
-    .rules-text { font-size: 0.85rem; line-height: 1.7; color: var(--gray-700); white-space: pre-wrap; padding: 1rem; }
+    .rules-wrap { padding: 1rem; }
+    .rules-card { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 0.75rem; }
+    .rules-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+    .rules-card-icon { font-size: 1rem; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rules-icon-blue { background: #E3F2FD; }
+    .rules-icon-green { background: var(--green-light); }
+    .rules-icon-amber { background: var(--amber-light); }
+    .rules-icon-red { background: var(--red-light); }
+    .rules-card-title { font-size: 0.88rem; font-weight: 700; color: var(--gray-900); }
+    .rules-item { display: flex; align-items: flex-start; gap: 8px; padding: 0.35rem 0; font-size: 0.82rem; color: var(--gray-700); line-height: 1.5; border-bottom: 1px solid var(--gray-100); }
+    .rules-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .rules-bullet { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-300); margin-top: 7px; flex-shrink: 0; }
+    .rules-pot-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.82rem; border-bottom: 1px solid var(--gray-100); }
+    .rules-pot-row:last-child { border-bottom: none; }
+    .rules-pot-label { color: var(--gray-500); }
+    .rules-pot-value { font-weight: 700; color: var(--gray-900); }
+    .outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .outcome-card { border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; }
+    .outcome-card-green { background: var(--green-light); }
+    .outcome-card-red { background: var(--red-light); }
+    .outcome-card-amber { background: var(--amber-light); }
+    .outcome-emoji { font-size: 1rem; }
+    .outcome-label { font-size: 0.75rem; font-weight: 700; color: var(--gray-700); margin: 3px 0 2px; }
+    .outcome-desc { font-size: 0.7rem; color: var(--gray-500); line-height: 1.4; }
 
     /* Bottom nav */
     .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111111; border-top: 2px solid #F5C842; display: flex; z-index: 20; padding-bottom: env(safe-area-inset-bottom); }
@@ -713,8 +736,54 @@ function renderStandingsTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function renderRulesTab() {
-  const { data } = state;
-  return `<div class="rules-text">${data.rulesText}</div>`;
+  return `
+    <div class="rules-wrap">
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-blue">🎯</div>
+          <div class="rules-card-title">The objective</div>
+        </div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Be the last player remaining in the competition</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Each round, pick one NRL team — if they win, you survive</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot pick the same team twice in the same competition</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-green">💰</div>
+          <div class="rules-card-title">The pot</div>
+        </div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value">$20 per person</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Prize</span><span class="rules-pot-value">Winner takes all</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Reset</span><span class="rules-pot-value">New competition each season</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-amber">📝</div>
+          <div class="rules-card-title">How to tip</div>
+        </div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Select exactly one team per round</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Tips lock when the first game of the round kicks off</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot change your tip after lockout</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot tip a team that has already played this round</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Team selections reset when a new competition begins</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-red">🏁</div>
+          <div class="rules-card-title">Outcomes</div>
+        </div>
+        <div class="outcome-grid">
+          <div class="outcome-card outcome-card-green"><div class="outcome-emoji">✅</div><div class="outcome-label">Win</div><div class="outcome-desc">Your team wins — you survive</div></div>
+          <div class="outcome-card outcome-card-red"><div class="outcome-emoji">❌</div><div class="outcome-label">Loss</div><div class="outcome-desc">Your team loses — eliminated</div></div>
+          <div class="outcome-card outcome-card-red"><div class="outcome-emoji">🤝</div><div class="outcome-label">Draw</div><div class="outcome-desc">Match draws — eliminated</div></div>
+          <div class="outcome-card outcome-card-amber"><div class="outcome-emoji">⏰</div><div class="outcome-label">No tip</div><div class="outcome-desc">Miss lockout — eliminated</div></div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ── Global actions ────────────────────────────────────────────────────────────
