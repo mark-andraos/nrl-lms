@@ -347,6 +347,7 @@ function loadAppData(email) {
   fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
     .then(r => r.json())
     .then(data => {
+      // Always calculate round and locked status on frontend — Apps Script booleans can be strings
       const currentRound = getCurrentRound(data.matches);
       const roundLocked = isRoundLocked(data.matches, currentRound);
       setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
@@ -554,7 +555,7 @@ function renderTipTab() {
     aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
   } else if (bannerResult === 'Pending' || bannerResult === null) {
     // No result yet — show amber
-    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip locked in — awaiting result' : 'No tip submitted yet'}</h3><p>${myTipForBanner ? 'Fingers crossed!' : 'Round is locked'}</p></div></div>`;
+    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip locked in — awaiting result' : 'No tip yet — round is open'}</h3><p>${myTipForBanner ? 'Fingers crossed!' : 'Pick your team below'}</p></div></div>`;
   } else {
     // Won or alive with no issue
     aliveHtml = `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`;
