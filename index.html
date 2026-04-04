@@ -626,31 +626,54 @@ function setTab(t) { setState({ tab: t }); }
 function selectTeam(name) { if (state.data.roundLocked) return; setState({ selectedTeam: name }); }
 function changeTip() { setState({ changingTip: true, selectedTeam: null }); }
 function signOut() {
-  if (confirm('Sign out?')) { setState({ screen: 'auth', user: null, data: null, tab: 'tip' }); }
+  if (confirm('Sign out?')) {
+    clearSession();
+    setState({ screen: 'auth', user: null, data: null, tab: 'tip', selectedTeam: null });
+  }
 }
 
 function attachAppListeners() {}
 
+// ── Persistent login via localStorage ────────────────────────────────────────
+const STORAGE_KEY = 'nrl_lms_user';
+
+function saveSession(email, name) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, name })); } catch(e) {}
+}
+
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; }
+}
+
+function clearSession() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadGoogle();
 
-// Demo mode — skip Google OAuth, use the API directly with a known email
-// In production, replace this with real Google sign-in
 function devSignIn() {
-  const email = prompt('Enter your registered email to sign in:');
-  if (!email) return;
-  const fakeUser = { email, name: email.split('@')[0], picture: null };
-  setState({ user: fakeUser });
-  loadAppData(email);
+  const email = prompt('Enter your registered email address:');
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email'); return; }
+  const trimmed = email.trim().toLowerCase();
+  const name = trimmed.split('@')[0];
+  saveSession(trimmed, name);
+  setState({ user: { email: trimmed, name } });
+  loadAppData(trimmed);
 }
 
-// Override signInWithGoogle to use dev mode until OAuth is configured
-const _signInWithGoogle = signInWithGoogle;
 window.signInWithGoogle = function() {
   devSignIn();
 };
 
-setState({ screen: 'auth' });
+// Auto-login if session exists
+const saved = loadSession();
+if (saved && saved.email) {
+  setState({ user: saved, screen: 'loading' });
+  loadAppData(saved.email);
+} else {
+  setState({ screen: 'auth' });
+}
 </script>
 </body>
 </html>
