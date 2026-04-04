@@ -377,7 +377,7 @@ async function submitTip() {
     if (result.error) { showToast(result.error); }
     else {
       showToast('Tip submitted! 🎉');
-      setState({ changingTip: false, selectedTeam: null });
+      setState({ changingTip: false, selectedTeam: null, submitting: false });
       loadAppData(user.email);
       return;
     }
