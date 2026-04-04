@@ -1,0 +1,18 @@
+{
+  "name": "NRL Last Man Standing",
+  "short_name": "LMS",
+  "description": "NRL 2026 Last Man Standing Tipping Competition",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#F5C842",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "LMS.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

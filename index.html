@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>NRL Last Man Standing</title>
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="NRL LMS" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #111111;
+      --blue-light: #f5f5f5;
+      --blue-dark: #000000;
+      --gold: #F5C842;
+      --gold-light: #FEF9E7;
+      --gold-dark: #C9A800;
+      --green: #2E7D32;
+      --green-light: #E8F5E9;
+      --red: #c0392b;
+      --red-light: #fdecea;
+      --amber: #b45309;
+      --amber-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111111;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-50); color: var(--gray-900); }
+    #root { height: 100%; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: #fff; position: relative; }
+
+    /* Auth */
+    .auth-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; background: #111111; }
+    .auth-logo { width: 140px; height: 140px; object-fit: contain; margin-bottom: 1.25rem; filter: drop-shadow(0 4px 16px rgba(245,200,66,0.25)); }
+    .auth-title { font-size: 1.5rem; font-weight: 800; color: #F5C842; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
+    .auth-sub { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-bottom: 2.5rem; }
+    .auth-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 320px; }
+    .auth-card h2 { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 1rem; }
+    .google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #F5C842; border-radius: var(--radius-sm); background: #F5C842; font-size: 0.9rem; font-weight: 700; color: #111111; cursor: pointer; transition: background 0.15s; }
+    .google-btn:hover { background: #e6b800; border-color: #e6b800; }
+    .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 1rem; }
+    .not-registered { margin-top: 1rem; padding: 0.75rem; background: rgba(245,200,66,0.1); border-radius: var(--radius-sm); font-size: 0.8rem; color: #F5C842; }
+
+    /* Header */
+    .header { padding: 0.75rem 1rem; border-bottom: 2px solid #F5C842; background: #111111; position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .header-inner { display: flex; align-items: center; gap: 10px; }
+    .header-logo { width: 32px; height: 32px; object-fit: contain; }
+    .header-title { font-size: 1rem; font-weight: 800; color: #F5C842; letter-spacing: -0.01em; }
+    .header-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 1px; }
+    .header-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F5C842; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #111111; cursor: pointer; flex-shrink: 0; }
+
+    /* Status pill */
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .pill-green { background: var(--green-light); color: var(--green); }
+    .pill-red { background: var(--red-light); color: var(--red); }
+    .pill-amber { background: var(--amber-light); color: var(--amber); }
+    .pill-blue { background: #FEF9E7; color: #8a6d00; }
+    .pill-gray { background: var(--gray-100); color: var(--gray-500); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green { background: var(--green); }
+    .dot-red { background: var(--red); }
+    .dot-amber { background: var(--amber); }
+
+    /* Main content */
+    .content { flex: 1; overflow-y: auto; padding-bottom: 5rem; }
+    .section { padding: 1rem; }
+    .section + .section { border-top: 1px solid var(--gray-100); }
+    .section-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
+
+    /* Status banner */
+    .status-banner { margin: 1rem; padding: 1rem; border-radius: var(--radius); display: flex; align-items: center; gap: 0.75rem; }
+    .status-banner.alive { background: var(--green-light); }
+    .status-banner.eliminated { background: var(--red-light); }
+    .status-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .status-banner-text h3 { font-size: 0.95rem; font-weight: 700; }
+    .status-banner-text p { font-size: 0.8rem; margin-top: 2px; opacity: 0.8; }
+    .alive h3, .alive p { color: var(--green); }
+    .eliminated h3, .eliminated p { color: var(--red); }
+
+    /* Lock notice */
+    .lock-notice { margin: 0 1rem 0.75rem; padding: 0.65rem 0.85rem; background: var(--amber-light); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--amber); display: flex; align-items: center; gap: 6px; }
+
+    /* Team grid */
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .team-btn { border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.65rem 0.5rem; text-align: center; font-size: 0.8rem; color: var(--gray-700); background: #fff; cursor: pointer; transition: all 0.12s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .team-btn:hover:not(:disabled) { border-color: #F5C842; background: #FEF9E7; }
+    .team-btn.selected { border: 2px solid #F5C842; background: #FEF9E7; color: #111111; font-weight: 700; }
+    .team-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .team-btn.used { opacity: 0.35; cursor: not-allowed; position: relative; }
+    .team-emoji { font-size: 1.2rem; }
+    .team-name { font-size: 0.75rem; }
+    .used-badge { font-size: 0.6rem; color: var(--gray-400); }
+
+    /* Submit button */
+    .submit-btn { width: 100%; padding: 0.85rem; background: #F5C842; color: #111111; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; margin-top: 1rem; cursor: pointer; transition: background 0.15s; }
+    .submit-btn:hover:not(:disabled) { background: #e6b800; }
+    .submit-btn:disabled { background: var(--gray-300); cursor: not-allowed; color: #fff; }
+
+    /* Tip confirmed */
+    .tip-confirmed { border: 1.5px solid var(--green); border-radius: var(--radius); padding: 1rem; background: var(--green-light); text-align: center; }
+    .tip-confirmed .big-emoji { font-size: 2rem; }
+    .tip-confirmed h3 { font-size: 1rem; font-weight: 700; color: var(--green); margin-top: 0.25rem; }
+    .tip-confirmed p { font-size: 0.8rem; color: var(--green); opacity: 0.8; margin-top: 0.15rem; }
+    .change-tip-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--blue); background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+    /* History cards */
+    .tip-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.6rem; }
+    .tip-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .tip-card-team { font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .tip-card-match { font-size: 0.75rem; color: var(--gray-500); }
+
+    /* Standings */
+    .standings-row { display: flex; align-items: center; gap: 10px; padding: 0.7rem 0; border-bottom: 1px solid var(--gray-100); }
+    .standings-row:last-child { border-bottom: none; }
+    .standings-row.you { background: var(--blue-light); margin: 0 -1rem; padding: 0.7rem 1rem; }
+    .standings-rank { font-size: 0.8rem; color: var(--gray-400); width: 20px; text-align: center; flex-shrink: 0; }
+    .standings-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+    .standings-tip { font-size: 0.75rem; color: var(--gray-400); }
+    .you-badge { font-size: 0.65rem; color: var(--blue); font-weight: 600; margin-left: 4px; }
+
+    /* Rules */
+    .rules-text { font-size: 0.85rem; line-height: 1.7; color: var(--gray-700); white-space: pre-wrap; padding: 1rem; }
+
+    /* Bottom nav */
+    .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111111; border-top: 2px solid #F5C842; display: flex; z-index: 20; padding-bottom: env(safe-area-inset-bottom); }
+    .tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.5rem 0.25rem 0.4rem; font-size: 0.65rem; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; gap: 2px; transition: color 0.12s; }
+    .tab.active { color: #F5C842; }
+    .tab-icon { font-size: 1.2rem; }
+
+    /* Admin */
+    .admin-section { padding: 1rem; }
+    .admin-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+    .admin-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.75rem; }
+    .admin-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .admin-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; font-size: 0.82rem; border-bottom: 1px solid var(--gray-100); }
+    .admin-row:last-child { border-bottom: none; }
+    .elim-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--red); color: var(--red); background: none; cursor: pointer; }
+    .elim-btn:hover { background: var(--red-light); }
+    .reinstate-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--green); color: var(--green); background: none; cursor: pointer; }
+
+    /* Loading */
+    .loading { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--gray-400); font-size: 0.85rem; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--gray-200); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--gray-900); color: #fff; padding: 0.6rem 1.2rem; border-radius: 20px; font-size: 0.82rem; font-weight: 500; z-index: 100; white-space: nowrap; animation: fadeInOut 3s forwards; }
+    @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(-8px)} 10%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0} }
+
+    /* Round matches */
+    .match-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.8rem; }
+    .match-row:last-child { border-bottom: none; }
+    .match-teams { color: var(--gray-700); }
+    .match-score { font-weight: 600; color: var(--gray-900); }
+    .match-status { font-size: 0.7rem; color: var(--gray-400); }
+    .match-winner { color: var(--green); font-weight: 600; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 2rem 1rem; color: var(--gray-400); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxfwe51FBnnXy0N8btlDZcddwcsT_JlyLIVaiLZeWoFTngQvhot4su-tGJ-WmrDMqkR/exec';
+const ADMIN_EMAIL = 'andraos1992@gmail.com';
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+const clean = s => (s || '').trim();
+
+function getCurrentRound(matches) {
+  // Find highest round that has at least one started match
+  let round = 1;
+  for (const m of matches) {
+    if (m.started && m.round > round) round = m.round;
+  }
+  // If no match has started yet, use round 1
+  return round;
+}
+
+function isRoundLocked(matches, round) {
+  return matches.some(m => m.round === round && m.started === true);
+}
+
+function getTipResult(tip, matches) {
+  const match = matches.find(m =>
+    m.round === tip.round &&
+    (clean(m.winner) === clean(tip.team) || clean(m.loser) === clean(tip.team) ||
+     clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team))
+  );
+  if (!match || !match.finished) return 'Pending';
+  if (!match.winner) return 'Draw';
+  if (clean(match.winner) === clean(tip.team)) return 'Won';
+  return 'Lost';
+}
+
+function getTeamEmoji(teams, name) {
+  const t = teams.find(t => clean(t.name) === clean(name));
+  return t ? t.emoji : '🏉';
+}
+
+function initials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// ── state ─────────────────────────────────────────────────────────────────────
+let state = {
+  screen: 'loading', // loading | auth | app
+  tab: 'tip',
+  user: null, // google user object
+  data: null, // api data
+  toast: null,
+  submitting: false,
+  selectedTeam: null,
+  changingTip: false,
+  adminView: false,
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ── Google Identity ───────────────────────────────────────────────────────────
+let googleReady = false;
+
+function loadGoogle() {
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => { googleReady = true; };
+  document.head.appendChild(s);
+}
+
+function signInWithGoogle() {
+  if (!googleReady) { showToast('Google not loaded yet, try again'); return; }
+  google.accounts.oauth2.initTokenClient({
+    client_id: '178416431768-placeholder.apps.googleusercontent.com',
+    scope: 'email profile',
+    callback: (resp) => {
+      if (resp.error) { showToast('Sign in failed'); return; }
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + resp.access_token }
+      })
+      .then(r => r.json())
+      .then(profile => {
+        setState({ user: profile });
+        loadAppData(profile.email);
+      });
+    }
+  }).requestAccessToken();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+function loadAppData(email) {
+  setState({ screen: 'loading' });
+  fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
+    .then(r => r.json())
+    .then(data => {
+      const currentRound = getCurrentRound(data.matches);
+      const roundLocked = isRoundLocked(data.matches, currentRound);
+      setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
+    })
+    .catch(() => {
+      showToast('Failed to load data. Check connection.');
+      setState({ screen: 'auth' });
+    });
+}
+
+async function submitTip() {
+  if (!state.selectedTeam || state.submitting) return;
+  const { data, user } = state;
+  setState({ submitting: true });
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'submitTip',
+        email: user.email,
+        entrantID: data.currentUser.entrantID,
+        round: data.currentRound,
+        team: state.selectedTeam,
+      })
+    });
+    const result = await resp.json();
+    if (result.error) { showToast(result.error); }
+    else {
+      showToast('Tip submitted! 🎉');
+      setState({ changingTip: false, selectedTeam: null });
+      loadAppData(user.email);
+      return;
+    }
+  } catch { showToast('Failed to submit. Try again.'); }
+  setState({ submitting: false });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  setState({ toast: msg });
+  setTimeout(() => setState({ toast: null }), 3200);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const root = document.getElementById('root');
+  const { screen, tab, user, data, toast } = state;
+
+  if (screen === 'loading') {
+    root.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    return;
+  }
+
+  if (screen === 'auth') {
+    root.innerHTML = renderAuth();
+    attachAuthListeners();
+    return;
+  }
+
+  // App
+  let mainContent = '';
+  if (tab === 'tip') mainContent = renderTipTab();
+  else if (tab === 'history') mainContent = renderHistoryTab();
+  else if (tab === 'standings') mainContent = renderStandingsTab();
+  else if (tab === 'rules') mainContent = renderRulesTab();
+
+  const cu = data.currentUser;
+  const avatarLabel = cu ? initials(cu.name) : '?';
+
+  root.innerHTML = `
+    ${toast ? `<div class="toast">${toast}</div>` : ''}
+    <div class="header">
+      <div class="header-top">
+        <div class="header-inner">
+          <img src="LMS.png" class="header-logo" alt="LMS" />
+          <div>
+          <div class="header-title">Last Man Standing</div>
+          <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
+        </div></div>
+        <div class="header-avatar" onclick="signOut()">${avatarLabel}</div>
+      </div>
+    </div>
+    <div class="content">${mainContent}</div>
+    <div class="tab-bar">
+      <button class="tab ${tab==='tip'?'active':''}" onclick="setTab('tip')"><span class="tab-icon">✏️</span>My Tip</button>
+      <button class="tab ${tab==='history'?'active':''}" onclick="setTab('history')"><span class="tab-icon">📋</span>History</button>
+      <button class="tab ${tab==='standings'?'active':''}" onclick="setTab('standings')"><span class="tab-icon">🏆</span>Standings</button>
+      <button class="tab ${tab==='rules'?'active':''}" onclick="setTab('rules')"><span class="tab-icon">📖</span>Rules</button>
+    </div>
+  `;
+  attachAppListeners();
+}
+
+// ── Auth screen ───────────────────────────────────────────────────────────────
+function renderAuth() {
+  return `
+    <div class="auth-screen">
+      <img src="LMS.png" class="auth-logo" alt="LMS Logo" />
+      <div class="auth-title">Last Man Standing</div>
+      <div class="auth-sub">NRL 2026 Tipping Competition</div>
+      <div class="auth-card">
+        <h2>Sign in to play</h2>
+        <button class="google-btn" id="google-sign-in">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in with Google
+        </button>
+        <div class="auth-note">Use the Gmail address you registered with</div>
+      </div>
+    </div>
+  `;
+}
+
+function attachAuthListeners() {
+  const btn = document.getElementById('google-sign-in');
+  if (btn) btn.onclick = signInWithGoogle;
+}
+
+// ── My Tip tab ────────────────────────────────────────────────────────────────
+function renderTipTab() {
+  const { data, selectedTeam, submitting, changingTip } = state;
+  const cu = data.currentUser;
+
+  if (!cu) {
+    return `<div class="empty">You are not registered in this competition.<br>Contact the admin to be added.</div>`;
+  }
+
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID);
+  const myTipThisRound = myTips.find(t => t.round === data.currentRound);
+  const usedTeams = new Set(myTips.map(t => clean(t.team)));
+
+  const aliveHtml = cu.alive
+    ? `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`
+    : `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+
+  // Already tipped and not changing
+  if (myTipThisRound && !changingTip) {
+    const result = getTipResult(myTipThisRound, data.matches);
+    const emoji = getTeamEmoji(data.teams, myTipThisRound.team);
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    return `
+      ${aliveHtml}
+      <div class="section">
+        <div class="section-label">Round ${data.currentRound} tip</div>
+        <div class="tip-confirmed">
+          <div class="big-emoji">${emoji}</div>
+          <h3>${clean(myTipThisRound.team)}</h3>
+          <p><span class="pill ${pillClass}">${result}</span></p>
+          ${!data.roundLocked ? `<button class="change-tip-btn" onclick="changeTip()">Change tip</button>` : ''}
+        </div>
+      </div>
+      ${renderRoundMatches()}
+    `;
+  }
+
+  // Eliminated — no tip needed
+  if (!cu.alive) {
+    return `${aliveHtml}${renderRoundMatches()}`;
+  }
+
+  // Round locked, no tip submitted
+  if (data.roundLocked && !myTipThisRound) {
+    return `
+      ${aliveHtml}
+      <div class="lock-notice">⏰ Round ${data.currentRound} is locked — you missed this round</div>
+      ${renderRoundMatches()}
+    `;
+  }
+
+  // Pick team
+  const roundMatches = data.matches.filter(m => m.round === data.currentRound);
+  const teamsPlayingThisRound = new Set(roundMatches.flatMap(m => [clean(m.home), clean(m.away)]));
+  const teamsAlreadyPlayed = new Set(roundMatches.filter(m => m.started).flatMap(m => [clean(m.home), clean(m.away)]));
+
+  const sortedTeams = [...data.teams].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const teamBtns = sortedTeams.map(t => {
+    const name = clean(t.name);
+    const isUsed = usedTeams.has(name);
+    const isPlayed = teamsAlreadyPlayed.has(name);
+    const isSelected = selectedTeam === name;
+    const disabled = isUsed || isPlayed;
+    const cls = isSelected ? 'selected' : isUsed ? 'used' : isPlayed ? 'used' : '';
+    const badge = isUsed ? '<div class="used-badge">used</div>' : isPlayed ? '<div class="used-badge">played</div>' : '';
+    return `<button class="team-btn ${cls}" ${disabled ? 'disabled' : ''} onclick="selectTeam('${name}')" data-team="${name}">
+      <span class="team-emoji">${t.emoji}</span>
+      <span class="team-name">${name}</span>
+      ${badge}
+    </button>`;
+  }).join('');
+
+  return `
+    ${aliveHtml}
+    <div class="section">
+      <div class="section-label">Round ${data.currentRound} · Pick your team</div>
+      ${!data.roundLocked ? `<div class="lock-notice">⏰ Locks when the first game kicks off</div>` : ''}
+      <div class="team-grid">${teamBtns}</div>
+      <button class="submit-btn" ${!selectedTeam || submitting ? 'disabled' : ''} onclick="submitTip()">
+        ${submitting ? 'Submitting...' : selectedTeam ? `Confirm — ${selectedTeam}` : 'Select a team'}
+      </button>
+    </div>
+    ${renderRoundMatches()}
+  `;
+}
+
+function renderRoundMatches() {
+  const { data } = state;
+  const matches = data.matches.filter(m => m.round === data.currentRound).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+  if (!matches.length) return '';
+  const rows = matches.map(m => {
+    const dt = new Date(m.dateTime);
+    const dateStr = dt.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
+    const timeStr = dt.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+    if (m.finished) {
+      return `<div class="match-row">
+        <div><span class="match-winner">${clean(m.home)}</span> <span class="match-teams">vs ${clean(m.away)}</span></div>
+        <div><span class="match-score">${m.homeScore}–${m.awayScore}</span></div>
+      </div>`;
+    }
+    if (m.started) {
+      return `<div class="match-row">
+        <div class="match-teams">${clean(m.home)} vs ${clean(m.away)}</div>
+        <div><span class="pill pill-amber">Live</span></div>
+      </div>`;
+    }
+    return `<div class="match-row">
+      <div class="match-teams">${clean(m.home)} vs ${clean(m.away)}</div>
+      <div class="match-status">${dateStr} ${timeStr}</div>
+    </div>`;
+  }).join('');
+  return `<div class="section"><div class="section-label">Round ${data.currentRound} fixtures</div>${rows}</div>`;
+}
+
+// ── History tab ───────────────────────────────────────────────────────────────
+function renderHistoryTab() {
+  const { data } = state;
+  const cu = data.currentUser;
+  if (!cu) return `<div class="empty">Not registered</div>`;
+
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID)
+    .sort((a, b) => b.round - a.round);
+
+  if (!myTips.length) return `<div class="empty">No tips submitted yet</div>`;
+
+  const cards = myTips.map(tip => {
+    const result = getTipResult(tip, data.matches);
+    const emoji = getTeamEmoji(data.teams, tip.team);
+    const match = data.matches.find(m =>
+      m.round === tip.round &&
+      (clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team))
+    );
+    const matchStr = match
+      ? (match.finished ? `${clean(match.home)} ${match.homeScore}–${match.awayScore} ${clean(match.away)}` : `${clean(match.home)} vs ${clean(match.away)}`)
+      : '';
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    return `<div class="tip-card">
+      <div class="tip-card-header">
+        <span class="pill pill-blue">Rd ${tip.round}</span>
+        <span class="pill ${pillClass}">${result}</span>
+      </div>
+      <div class="tip-card-team">${emoji} ${clean(tip.team)}</div>
+      <div class="tip-card-match">${matchStr}</div>
+    </div>`;
+  }).join('');
+
+  const won = myTips.filter(t => getTipResult(t, data.matches) === 'Won').length;
+  const lost = myTips.filter(t => getTipResult(t, data.matches) === 'Lost').length;
+
+  return `
+    <div class="section">
+      <div style="display:flex;gap:8px;margin-bottom:0.75rem;">
+        <div style="flex:1;background:var(--green-light);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green)">${won}</div>
+          <div style="font-size:0.7rem;color:var(--green)">Survived</div>
+        </div>
+        <div style="flex:1;background:var(--red-light);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--red)">${lost}</div>
+          <div style="font-size:0.7rem;color:var(--red)">Lost</div>
+        </div>
+        <div style="flex:1;background:var(--gray-100);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--gray-700)">${myTips.length}</div>
+          <div style="font-size:0.7rem;color:var(--gray-500)">Total</div>
+        </div>
+      </div>
+      ${cards}
+    </div>
+  `;
+}
+
+// ── Standings tab ─────────────────────────────────────────────────────────────
+function renderStandingsTab() {
+  const { data } = state;
+  const cu = data.currentUser;
+  const { currentRound, roundLocked } = data;
+
+  const alive = data.entrants.filter(e => e.alive);
+  const eliminated = data.entrants.filter(e => !e.alive);
+
+  function getTipDisplay(entrant) {
+    const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound);
+    if (!tip) return '<span class="pill pill-gray">No tip</span>';
+    if (!roundLocked) return '<span class="pill pill-amber">Tipped ✓</span>';
+    const emoji = getTeamEmoji(data.teams, tip.team);
+    const result = getTipResult(tip, data.matches);
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    return `<span class="pill ${pillClass}">${emoji} ${clean(tip.team)}</span>`;
+  }
+
+  function getElimRound(entrant) {
+    // Find latest round they have a Lost result
+    const lostTips = data.tips.filter(t => t.entrantID === entrant.entrantID && getTipResult(t, data.matches) === 'Lost');
+    if (!lostTips.length) return '—';
+    return 'Rd ' + Math.max(...lostTips.map(t => t.round));
+  }
+
+  const aliveRows = alive.map((e, i) => {
+    const isYou = cu && e.entrantID === cu.entrantID;
+    return `<div class="standings-row ${isYou ? 'you' : ''}">
+      <div class="standings-rank">${i + 1}</div>
+      <div class="standings-name">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div>${getTipDisplay(e)}</div>
+    </div>`;
+  }).join('');
+
+  const elimRows = eliminated.map(e => {
+    const isYou = cu && e.entrantID === cu.entrantID;
+    return `<div class="standings-row ${isYou ? 'you' : ''}" style="opacity:0.6">
+      <div class="standings-rank">—</div>
+      <div class="standings-name" style="text-decoration:line-through">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div><span class="pill pill-red">Out ${getElimRound(e)}</span></div>
+    </div>`;
+  }).join('');
+
+  const lockNote = roundLocked
+    ? `<div class="lock-notice">🔒 Round locked — tips are now visible</div>`
+    : `<div class="lock-notice">👀 Tips hidden until round locks</div>`;
+
+  return `
+    <div class="section">
+      ${lockNote}
+      <div class="section-label">${alive.length} still alive</div>
+      ${aliveRows || '<div class="empty">No survivors yet</div>'}
+    </div>
+    ${eliminated.length ? `<div class="section"><div class="section-label">${eliminated.length} eliminated</div>${elimRows}</div>` : ''}
+  `;
+}
+
+// ── Rules tab ─────────────────────────────────────────────────────────────────
+function renderRulesTab() {
+  const { data } = state;
+  return `<div class="rules-text">${data.rulesText}</div>`;
+}
+
+// ── Global actions ────────────────────────────────────────────────────────────
+function setTab(t) { setState({ tab: t }); }
+function selectTeam(name) { if (state.data.roundLocked) return; setState({ selectedTeam: name }); }
+function changeTip() { setState({ changingTip: true, selectedTeam: null }); }
+function signOut() {
+  if (confirm('Sign out?')) { setState({ screen: 'auth', user: null, data: null, tab: 'tip' }); }
+}
+
+function attachAppListeners() {}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadGoogle();
+
+// Demo mode — skip Google OAuth, use the API directly with a known email
+// In production, replace this with real Google sign-in
+function devSignIn() {
+  const email = prompt('Enter your registered email to sign in:');
+  if (!email) return;
+  const fakeUser = { email, name: email.split('@')[0], picture: null };
+  setState({ user: fakeUser });
+  loadAppData(email);
+}
+
+// Override signInWithGoogle to use dev mode until OAuth is configured
+const _signInWithGoogle = signInWithGoogle;
+window.signInWithGoogle = function() {
+  devSignIn();
+};
+
+setState({ screen: 'auth' });
+</script>
+</body>
+</html>
