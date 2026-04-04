@@ -40,16 +40,22 @@
     #root { height: 100%; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: #fff; position: relative; }
 
     /* Auth */
-    .auth-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; background: #111111; }
-    .auth-logo { width: 140px; height: 140px; object-fit: contain; margin-bottom: 1.25rem; filter: drop-shadow(0 4px 16px rgba(245,200,66,0.25)); }
-    .auth-title { font-size: 1.5rem; font-weight: 800; color: #F5C842; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
-    .auth-sub { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-bottom: 2.5rem; }
-    .auth-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 320px; }
-    .auth-card h2 { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 1rem; }
-    .google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #F5C842; border-radius: var(--radius-sm); background: #F5C842; font-size: 0.9rem; font-weight: 700; color: #111111; cursor: pointer; transition: background 0.15s; }
-    .google-btn:hover { background: #e6b800; border-color: #e6b800; }
-    .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-    .auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 1rem; }
+    .auth-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2.5rem 1.75rem 1.5rem; text-align: center; background: #111111; overflow-y: auto; }
+    .auth-logo-wrap { background: #fff; border-radius: 20px; padding: 16px; margin-bottom: 1.5rem; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
+    .auth-logo { width: 78px; height: 78px; object-fit: contain; }
+    .auth-title-wrap { margin-bottom: 0.75rem; }
+    .auth-title-line1 { font-size: 1.6rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
+    .auth-title-line2 { font-size: 1.6rem; font-weight: 800; color: #2E7D32; line-height: 1.1; }
+    .auth-tagline { font-size: 0.88rem; color: rgba(255,255,255,0.5); margin-bottom: 2rem; }
+    .google-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 1rem; border: none; border-radius: var(--radius-sm); background: #2E7D32; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-bottom: 0.75rem; }
+    .google-btn:hover { background: #1b5e20; }
+    .auth-note { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 2rem; }
+    .auth-howit { width: 100%; text-align: left; margin-bottom: 2rem; }
+    .auth-howit-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; margin-bottom: 1rem; }
+    .auth-howit-row { display: flex; align-items: center; gap: 12px; padding: 0.6rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .auth-howit-row:last-child { border-bottom: none; }
+    .auth-howit-row span:first-child { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+    .auth-credit { font-size: 0.72rem; color: rgba(255,255,255,0.2); margin-top: auto; padding-top: 1rem; }
     .not-registered { margin-top: 1rem; padding: 0.75rem; background: rgba(245,200,66,0.1); border-radius: var(--radius-sm); font-size: 0.8rem; color: #F5C842; }
 
     /* Header */
@@ -83,11 +89,13 @@
     .status-banner { margin: 1rem; padding: 1rem; border-radius: var(--radius); display: flex; align-items: center; gap: 0.75rem; }
     .status-banner.alive { background: var(--green-light); }
     .status-banner.eliminated { background: var(--red-light); }
+    .status-banner.pending { background: var(--amber-light); }
     .status-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
     .status-banner-text h3 { font-size: 0.95rem; font-weight: 700; }
     .status-banner-text p { font-size: 0.8rem; margin-top: 2px; opacity: 0.8; }
     .alive h3, .alive p { color: var(--green); }
     .eliminated h3, .eliminated p { color: var(--red); }
+    .pending h3, .pending p { color: var(--amber); }
 
     /* Lock notice */
     .lock-notice { margin: 0 1rem 0.75rem; padding: 0.65rem 0.85rem; background: var(--amber-light); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--amber); display: flex; align-items: center; gap: 6px; }
@@ -166,6 +174,7 @@
     .match-score { font-weight: 600; color: var(--gray-900); }
     .match-status { font-size: 0.7rem; color: var(--gray-400); }
     .match-winner { color: var(--green); font-weight: 600; }
+    .match-loser { color: var(--gray-400); text-decoration: line-through; font-weight: 400; }
 
     /* Empty state */
     .empty { text-align: center; padding: 2rem 1rem; color: var(--gray-400); font-size: 0.85rem; }
@@ -399,9 +408,24 @@ function renderTipTab() {
   const myTipThisRound = myTips.find(t => t.round === data.currentRound);
   const usedTeams = new Set(myTips.map(t => clean(t.team)));
 
-  const aliveHtml = cu.alive
-    ? `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`
-    : `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+  // Determine banner based on current round tip result, not just alive status
+  const myTipForBanner = data.tips.find(t => t.entrantID === cu.entrantID && t.round === data.currentRound);
+  const bannerResult = myTipForBanner ? getTipResult(myTipForBanner, data.matches) : null;
+
+  let aliveHtml;
+  if (!cu.alive) {
+    // Eliminated
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+  } else if (bannerResult === 'Lost') {
+    // Tip lost this round — show red even if alive flag not yet updated
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
+  } else if (bannerResult === 'Pending' || bannerResult === null) {
+    // No result yet — show amber
+    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip locked in — awaiting result' : 'No tip submitted yet'}</h3><p>${myTipForBanner ? 'Fingers crossed!' : 'Round is locked'}</p></div></div>`;
+  } else {
+    // Won or alive with no issue
+    aliveHtml = `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`;
+  }
 
   // Already tipped and not changing
   if (myTipThisRound && !changingTip) {
@@ -482,8 +506,12 @@ function renderRoundMatches() {
     const dateStr = dt.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
     const timeStr = dt.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
     if (m.finished) {
+      const homeWon = clean(m.winner) === clean(m.home);
+      const awayWon = clean(m.winner) === clean(m.away);
+      const homeClass = homeWon ? 'match-winner' : 'match-teams match-loser';
+      const awayClass = awayWon ? 'match-winner' : 'match-teams match-loser';
       return `<div class="match-row">
-        <div><span class="match-winner">${clean(m.home)}</span> <span class="match-teams">vs ${clean(m.away)}</span></div>
+        <div><span class="${homeClass}">${clean(m.home)}</span> <span class="match-teams"> vs </span><span class="${awayClass}">${clean(m.away)}</span></div>
         <div><span class="match-score">${m.homeScore}–${m.awayScore}</span></div>
       </div>`;
     }
