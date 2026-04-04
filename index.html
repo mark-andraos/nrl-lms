@@ -67,6 +67,32 @@
     .header-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 1px; }
     .header-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F5C842; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #111111; cursor: pointer; flex-shrink: 0; }
 
+    /* Avatar dropdown */
+    .dropdown-wrap { position: relative; }
+    .dropdown-menu { position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 50; overflow: hidden; }
+    .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; font-size: 0.88rem; color: var(--gray-700); cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+    .dropdown-item:hover { background: var(--gray-50); }
+    .dropdown-item.danger { color: var(--red); }
+    .dropdown-item.danger:hover { background: var(--red-light); }
+    .dropdown-divider { height: 1px; background: var(--gray-100); }
+    .dropdown-user { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); }
+    .dropdown-user-name { font-size: 0.85rem; font-weight: 600; color: var(--gray-900); }
+    .dropdown-user-email { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* Username modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal { background: #fff; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 360px; }
+    .modal h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.35rem; }
+    .modal p { font-size: 0.82rem; color: var(--gray-500); margin-bottom: 1.25rem; }
+    .modal input { width: 100%; padding: 0.75rem 0.875rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--gray-900); outline: none; }
+    .modal input:focus { border-color: #F5C842; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+    .modal-btn { flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; }
+    .modal-btn-cancel { background: var(--gray-100); color: var(--gray-700); }
+    .modal-btn-save { background: #F5C842; color: #111111; }
+    .modal-btn-cancel:hover { background: var(--gray-200); }
+    .modal-btn-save:hover { background: #e6b800; }
+
     /* Status pill */
     .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
     .pill-green { background: var(--green-light); color: var(--green); }
@@ -235,13 +261,16 @@ function initials(name) {
 let state = {
   screen: 'loading', // loading | auth | app
   tab: 'tip',
-  user: null, // google user object
-  data: null, // api data
+  user: null,
+  data: null,
   toast: null,
   submitting: false,
   selectedTeam: null,
   changingTip: false,
   adminView: false,
+  showDropdown: false,
+  showUsernameModal: false,
+  usernameInput: '',
 };
 
 function setState(patch) {
@@ -363,7 +392,19 @@ function render() {
           <div class="header-title">Last Man Standing</div>
           <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
         </div></div>
-        <div class="header-avatar" onclick="signOut()">${avatarLabel}</div>
+        <div class="dropdown-wrap">
+          <div class="header-avatar" onclick="toggleDropdown()">${avatarLabel}</div>
+          ${state.showDropdown ? `
+          <div class="dropdown-menu" id="dropdown">
+            <div class="dropdown-user">
+              <div class="dropdown-user-name">${cu ? cu.name : ''}</div>
+              <div class="dropdown-user-email">${user ? user.email : ''}</div>
+            </div>
+            <button class="dropdown-item" onclick="openUsernameModal()">✏️ Update username</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" onclick="signOut()">🚪 Sign out</button>
+          </div>` : ''}
+        </div>
       </div>
     </div>
     <div class="content">${mainContent}</div>
@@ -373,6 +414,18 @@ function render() {
       <button class="tab ${tab==='standings'?'active':''}" onclick="setTab('standings')"><span class="tab-icon">🏆</span>Standings</button>
       <button class="tab ${tab==='rules'?'active':''}" onclick="setTab('rules')"><span class="tab-icon">📖</span>Rules</button>
     </div>
+    ${state.showUsernameModal ? `
+    <div class="modal-overlay" onclick="closeUsernameModal(event)">
+      <div class="modal">
+        <h3>Update username</h3>
+        <p>This is the name shown on the Standings page</p>
+        <input type="text" id="username-input" placeholder="Enter your name" value="${state.usernameInput}" oninput="state.usernameInput = this.value" maxlength="30" />
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" onclick="setState({showUsernameModal:false})">Cancel</button>
+          <button class="modal-btn modal-btn-save" onclick="saveUsername()">Save</button>
+        </div>
+      </div>
+    </div>` : ''}
   `;
   attachAppListeners();
 }
@@ -671,6 +724,62 @@ function signOut() {
   if (confirm('Sign out?')) {
     clearSession();
     setState({ screen: 'auth', user: null, data: null, tab: 'tip', selectedTeam: null });
+  }
+}
+
+function toggleDropdown() {
+  setState({ showDropdown: !state.showDropdown });
+  // Close on outside click
+  if (!state.showDropdown) {
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdownOutside, { once: true });
+    }, 0);
+  }
+}
+
+function closeDropdownOutside(e) {
+  if (!e.target.closest('.dropdown-wrap')) {
+    setState({ showDropdown: false });
+  }
+}
+
+function openUsernameModal() {
+  const currentName = state.data && state.data.currentUser ? state.data.currentUser.name : '';
+  setState({ showDropdown: false, showUsernameModal: true, usernameInput: currentName });
+  setTimeout(() => {
+    const input = document.getElementById('username-input');
+    if (input) { input.focus(); input.select(); }
+  }, 50);
+}
+
+function closeUsernameModal(e) {
+  if (e.target.classList.contains('modal-overlay')) setState({ showUsernameModal: false });
+}
+
+async function saveUsername() {
+  const name = state.usernameInput.trim();
+  if (!name) { showToast('Please enter a name'); return; }
+  if (!state.data || !state.data.currentUser) return;
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'updateUsername',
+        entrantID: state.data.currentUser.entrantID,
+        name
+      })
+    });
+    const result = await resp.json();
+    if (result.error) { showToast(result.error); return; }
+    // Update locally so UI reflects immediately without a reload
+    state.data.currentUser.name = name;
+    const entrant = state.data.entrants.find(e => e.entrantID === state.data.currentUser.entrantID);
+    if (entrant) entrant.name = name;
+    setState({ showUsernameModal: false });
+    showToast('Username updated! ✓');
+  } catch {
+    showToast('Failed to save. Try again.');
   }
 }
 
