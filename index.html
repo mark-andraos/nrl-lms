@@ -407,6 +407,10 @@ function render() {
     return;
   }
 
+  // Save scroll position before re-render
+  const contentEl = document.querySelector('.content');
+  const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
   // App
   let mainContent = '';
   if (tab === 'tip') mainContent = renderTipTab();
@@ -463,6 +467,10 @@ function render() {
     </div>` : ''}
   `;
   attachAppListeners();
+
+  // Restore scroll position after re-render
+  const newContentEl = document.querySelector('.content');
+  if (newContentEl && scrollTop) newContentEl.scrollTop = scrollTop;
 }
 
 // ── Auth screen ───────────────────────────────────────────────────────────────
