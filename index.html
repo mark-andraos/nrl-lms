@@ -250,7 +250,8 @@ function getCurrentRound(matches) {
   // Find highest round that has at least one started match
   let round = 1;
   for (const m of matches) {
-    if (m.started && m.round > round) round = m.round;
+    //if (m.started && m.round > round) round = m.round;
+    if (m.started && m.round > round && m.round < 5) round = m.round; // Testing round 6. delete this line after test. 
   }
   // If no match has started yet, use round 1
   return round;
