@@ -59,6 +59,25 @@
     .auth-howit-row span:first-child { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
     .auth-credit { font-size: 0.72rem; color: rgba(255,255,255,0.2); margin-top: auto; padding-top: 1rem; }
     .not-registered { margin-top: 1rem; padding: 0.75rem; background: rgba(245,200,66,0.1); border-radius: var(--radius-sm); font-size: 0.8rem; color: #F5C842; }
+    .auth-btn-secondary { display: flex; align-items: center; justify-content: center; width: 100%; padding: 1rem; border: 1.5px solid rgba(255,255,255,0.2); border-radius: var(--radius-sm); background: transparent; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-bottom: 0.75rem; }
+    .auth-btn-secondary:hover { background: rgba(255,255,255,0.08); }
+    .auth-divider { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 0.75rem; }
+    .auth-divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.12); }
+    .auth-divider-text { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+    .register-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2.5rem 1.75rem 1.5rem; text-align: center; background: #111111; overflow-y: auto; }
+    .register-back { align-self: flex-start; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 0.85rem; cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 6px; }
+    .register-back:hover { color: #fff; }
+    .register-title { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; }
+    .register-sub { font-size: 0.88rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+    .register-field { width: 100%; margin-bottom: 1rem; text-align: left; }
+    .register-label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; display: block; letter-spacing: 0.04em; }
+    .register-input { width: 100%; padding: 0.875rem 1rem; background: #1a1a1a; border: 1.5px solid #2a2a2a; border-radius: var(--radius-sm); font-size: 0.95rem; color: #fff; outline: none; }
+    .register-input:focus { border-color: #F5C842; }
+    .register-input::placeholder { color: rgba(255,255,255,0.25); }
+    .register-btn { width: 100%; padding: 1rem; border: none; border-radius: var(--radius-sm); background: #2E7D32; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-top: 0.5rem; }
+    .register-btn:hover { background: #1b5e20; }
+    .register-btn:disabled { background: #333; color: rgba(255,255,255,0.3); cursor: not-allowed; }
+    .register-error { width: 100%; padding: 0.75rem; background: rgba(192,57,43,0.15); border-radius: var(--radius-sm); font-size: 0.82rem; color: #e74c3c; margin-bottom: 1rem; text-align: left; }
     /* Header */
 
     .header { padding: 0.75rem 1rem; border-bottom: 2px solid #F5C842; background: #111111; position: sticky; top: 0; z-index: 10; }
@@ -294,7 +313,7 @@ function initials(name) {
 
 // ── state ─────────────────────────────────────────────────────────────────────
 let state = {
-  screen: 'loading', // loading | auth | app
+  screen: 'loading', // loading | auth | register | app
   tab: 'tip',
   user: null,
   data: null,
@@ -306,6 +325,10 @@ let state = {
   showDropdown: false,
   showUsernameModal: false,
   usernameInput: '',
+  registerName: '',
+  registerEmail: '',
+  registerError: '',
+  registering: false,
 };
 
 function setState(patch) {
@@ -433,6 +456,12 @@ function render() {
     return;
   }
 
+  if (screen === 'register') {
+    root.innerHTML = renderRegister();
+    attachRegisterListeners();
+    return;
+  }
+
   // Save scroll position before re-render
   const contentEl = document.querySelector('.content');
   const scrollTop = contentEl ? contentEl.scrollTop : 0;
@@ -511,8 +540,10 @@ function renderAuth() {
         <div class="auth-title-line2">Standing</div>
       </div>
       <div class="auth-tagline">Pick one team per round. Don't get eliminated.</div>
-      <button class="google-btn" id="google-sign-in">Sign in to Play</button>
-      <div class="auth-note">Sign in with your email address</div>
+      <button class="google-btn" id="google-sign-in">Sign in</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">or</div><div class="auth-divider-line"></div></div>
+      <button class="auth-btn-secondary" id="go-register">Register to play</button>
+      <div class="auth-note">Already registered? Sign in above</div>
       <div class="auth-howit">
         <div class="auth-howit-title">HOW IT WORKS</div>
         <div class="auth-howit-row"><span>🎯</span><span>Pick one NRL team per round</span></div>
@@ -528,6 +559,77 @@ function renderAuth() {
 function attachAuthListeners() {
   const btn = document.getElementById('google-sign-in');
   if (btn) btn.onclick = signInWithGoogle;
+  const reg = document.getElementById('go-register');
+  if (reg) reg.onclick = () => setState({ screen: 'register', registerName: '', registerEmail: '', registerError: '' });
+}
+
+// ── Register screen ──────────────────────────────────────────────────────────
+function renderRegister() {
+  const { registerError, registering } = state;
+  return `
+    <div class="register-screen">
+      <button class="register-back" onclick="setState({screen:'auth'})">← Back to sign in</button>
+      <div class="auth-logo-wrap">
+        <img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" />
+      </div>
+      <div class="register-title">Join the competition</div>
+      <div class="register-sub">NRL 2026 Last Man Standing</div>
+      ${registerError ? `<div class="register-error">${registerError}</div>` : ''}
+      <div class="register-field">
+        <label class="register-label">CREATE USERNAME</label>
+        <input class="register-input" id="reg-name" type="text" placeholder="e.g. Ross80" maxlength="30" value="${state.registerName}" />
+      </div>
+      <div class="register-field">
+        <label class="register-label">EMAIL ADDRESS</label>
+        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" />
+      </div>
+      <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>
+        ${registering ? 'Registering...' : 'Register & Play'}
+      </button>
+      <div class="auth-credit" style="margin-top:2rem;">App built by Mark Andraos</div>
+    </div>
+  `;
+}
+
+function attachRegisterListeners() {
+  const nameInput = document.getElementById('reg-name');
+  const emailInput = document.getElementById('reg-email');
+  const submitBtn = document.getElementById('reg-submit');
+  if (nameInput) nameInput.oninput = e => { state.registerName = e.target.value; };
+  if (emailInput) emailInput.oninput = e => { state.registerEmail = e.target.value; };
+  if (submitBtn) submitBtn.onclick = submitRegistration;
+}
+
+async function submitRegistration() {
+  const name = state.registerName.trim();
+  const email = state.registerEmail.trim().toLowerCase();
+
+  if (!name) { setState({ registerError: 'Please enter your name.' }); return; }
+  if (!email || !email.includes('@')) { setState({ registerError: 'Please enter a valid email address.' }); return; }
+
+  setState({ registering: true, registerError: '' });
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'registerEntrant', name, email })
+    });
+    const result = await resp.json();
+
+    if (result.error) {
+      setState({ registering: false, registerError: result.error });
+      return;
+    }
+
+    // Registration successful — auto sign in
+    showToast('Welcome to the comp! 🎉');
+    saveSession(email, name);
+    setState({ user: { email, name }, registering: false, registerError: '' });
+    loadAppData(email);
+
+  } catch {
+    setState({ registering: false, registerError: 'Registration failed. Check your connection and try again.' });
+  }
 }
 
 // ── My Tip tab ────────────────────────────────────────────────────────────────
