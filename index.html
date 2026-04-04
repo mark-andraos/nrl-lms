@@ -370,6 +370,7 @@ async function submitTip() {
         entrantID: data.currentUser.entrantID,
         round: data.currentRound,
         team: state.selectedTeam,
+        replaceTip: state.changingTip, // tell Apps Script to replace existing tip
       })
     });
     const result = await resp.json();
@@ -574,13 +575,16 @@ function renderTipTab() {
     const name = clean(t.name);
     const isUsed = usedTeams.has(name);
     const isPlayed = teamsAlreadyPlayed.has(name);
+    const isNotPlaying = !teamsPlayingThisRound.has(name);
     const isSelected = selectedTeam === name;
-    const disabled = isUsed || isPlayed;
-    const cls = isSelected ? 'selected' : isUsed ? 'used' : isPlayed ? 'used' : '';
-    const badge = isUsed ? '<div class="used-badge">used</div>' : isPlayed ? '<div class="used-badge">played</div>' : '';
-    return `<button class="team-btn ${cls}" ${disabled ? 'disabled' : ''} onclick="selectTeam('${name}')" data-team="${name}">
+    const disabled = isUsed || isPlayed || isNotPlaying;
+    const cls = isSelected ? 'selected' : (isUsed || isPlayed || isNotPlaying) ? 'used' : '';
+    const badge = isUsed ? '<div class="used-badge">used</div>' : isNotPlaying ? '<div class="used-badge">bye</div>' : isPlayed ? '<div class="used-badge">played</div>' : '';
+    const selectedStyle = isSelected && t.colour ? `style="border-color:${t.colour};background:${t.colour}18;color:${t.colour};"` : '';
+    const selectedNameStyle = isSelected && t.colour ? `style="color:${t.colour};font-weight:700;"` : '';
+    return `<button class="team-btn ${cls}" ${disabled ? 'disabled' : ''} onclick="selectTeam('${name}')" data-team="${name}" ${selectedStyle}>
       <span class="team-emoji">${t.emoji}</span>
-      <span class="team-name">${name}</span>
+      <span class="team-name" ${selectedNameStyle}>${name}</span>
       ${badge}
     </button>`;
   }).join('');
