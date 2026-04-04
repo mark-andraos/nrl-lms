@@ -52,13 +52,13 @@
     .auth-note { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 2rem; }
     .auth-howit { width: 100%; text-align: left; margin-bottom: 2rem; }
     .auth-howit-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; margin-bottom: 1rem; }
-    .auth-howit-row { display: flex; align-items: center; gap: 12px; padding: 0.6rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .auth-howit-row { display: flex; align-items: center; gap: 12px; padding: 0.6rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8); border-bottom: none; }
     .auth-howit-row:last-child { border-bottom: none; }
     .auth-howit-row span:first-child { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
     .auth-credit { font-size: 0.72rem; color: rgba(255,255,255,0.2); margin-top: auto; padding-top: 1rem; }
     .not-registered { margin-top: 1rem; padding: 0.75rem; background: rgba(245,200,66,0.1); border-radius: var(--radius-sm); font-size: 0.8rem; color: #F5C842; }
-
     /* Header */
+
     .header { padding: 0.75rem 1rem; border-bottom: 2px solid #F5C842; background: #111111; position: sticky; top: 0; z-index: 10; }
     .header-top { display: flex; align-items: center; justify-content: space-between; }
     .header-inner { display: flex; align-items: center; gap: 10px; }
@@ -117,11 +117,17 @@
     .submit-btn:disabled { background: var(--gray-300); cursor: not-allowed; color: #fff; }
 
     /* Tip confirmed */
-    .tip-confirmed { border: 1.5px solid var(--green); border-radius: var(--radius); padding: 1rem; background: var(--green-light); text-align: center; }
+    .tip-confirmed { border-radius: var(--radius); padding: 1.25rem 1rem; text-align: center; border: 1.5px solid; }
+    .tip-confirmed-won { background: var(--green-light); border-color: var(--green); }
+    .tip-confirmed-won h3 { color: var(--green); }
+    .tip-confirmed-pending { background: var(--amber-light); border-color: var(--amber); }
+    .tip-confirmed-pending h3 { color: var(--amber); }
+    .tip-confirmed-lost { background: var(--red-light); border-color: var(--red); }
+    .tip-confirmed-lost h3 { color: var(--red); }
     .tip-confirmed .big-emoji { font-size: 2rem; }
-    .tip-confirmed h3 { font-size: 1rem; font-weight: 700; color: var(--green); margin-top: 0.25rem; }
-    .tip-confirmed p { font-size: 0.8rem; color: var(--green); opacity: 0.8; margin-top: 0.15rem; }
-    .change-tip-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--blue); background: none; border: none; cursor: pointer; text-decoration: underline; }
+    .tip-confirmed h3 { font-size: 1rem; font-weight: 700; margin-top: 0.25rem; }
+    .tip-confirmed p { font-size: 0.8rem; margin-top: 0.15rem; }
+    .change-tip-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--amber); background: none; border: none; cursor: pointer; text-decoration: underline; }
 
     /* History cards */
     .tip-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.6rem; }
@@ -375,17 +381,24 @@ function render() {
 function renderAuth() {
   return `
     <div class="auth-screen">
-      <img src="LMS.png" class="auth-logo" alt="LMS Logo" />
-      <div class="auth-title">Last Man Standing</div>
-      <div class="auth-sub">NRL 2026 Tipping Competition</div>
-      <div class="auth-card">
-        <h2>Sign in to play</h2>
-        <button class="google-btn" id="google-sign-in">
-          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Sign in with Google
-        </button>
-        <div class="auth-note">Use the Gmail address you registered with</div>
+      <div class="auth-logo-wrap">
+        <img src="LMS.png" class="auth-logo" alt="LMS Logo" />
       </div>
+      <div class="auth-title-wrap">
+        <div class="auth-title-line1">NRL Last Man</div>
+        <div class="auth-title-line2">Standing</div>
+      </div>
+      <div class="auth-tagline">Pick one team per round. Don't get eliminated.</div>
+      <button class="google-btn" id="google-sign-in">Sign in to Play</button>
+      <div class="auth-note">Sign in with your email address</div>
+      <div class="auth-howit">
+        <div class="auth-howit-title">HOW IT WORKS</div>
+        <div class="auth-howit-row"><span>🎯</span><span>Pick one NRL team per round</span></div>
+        <div class="auth-howit-row"><span>🚫</span><span>Can't reuse teams across rounds</span></div>
+        <div class="auth-howit-row"><span>❌</span><span>Wrong tip = eliminated</span></div>
+        <div class="auth-howit-row"><span>🏆</span><span>Last person standing wins</span></div>
+      </div>
+      <div class="auth-credit">App built by Mark Andraos</div>
     </div>
   `;
 }
@@ -432,11 +445,12 @@ function renderTipTab() {
     const result = getTipResult(myTipThisRound, data.matches);
     const emoji = getTeamEmoji(data.teams, myTipThisRound.team);
     const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    const cardClass = result === 'Won' ? 'tip-confirmed-won' : result === 'Lost' ? 'tip-confirmed-lost' : 'tip-confirmed-pending';
     return `
       ${aliveHtml}
       <div class="section">
         <div class="section-label">Round ${data.currentRound} tip</div>
-        <div class="tip-confirmed">
+        <div class="tip-confirmed ${cardClass}">
           <div class="big-emoji">${emoji}</div>
           <h3>${clean(myTipThisRound.team)}</h3>
           <p><span class="pill ${pillClass}">${result}</span></p>
