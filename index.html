@@ -371,17 +371,15 @@ function loadAppData(email) {
       const currentRound = getCurrentRound(data.matches);
       const roundLocked = isRoundLocked(data.matches, currentRound);
 
-      // If user signed in with Google but isn't registered yet — send to register
+      // If not registered, send to register screen
       if (!data.currentUser) {
-        const savedName = state.user ? (state.user.name || email.split('@')[0]) : email.split('@')[0];
         setState({
           screen: 'register',
           registerEmail: email,
-          registerName: savedName,
+          registerName: '',
           registerError: '',
-          data: { ...data, currentRound, roundLocked }
         });
-        showToast('Please complete your registration to play');
+        showToast('Email not found — please register first');
         return;
       }
 
