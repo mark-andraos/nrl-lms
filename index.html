@@ -350,26 +350,37 @@ function loadGoogle() {
 
 function signInWithGoogle() {
   if (typeof google === 'undefined' || !google.accounts) {
-    showToast('Google sign in not ready, try again in a moment');
+    showToast('Google not ready — try again in a moment');
     return;
   }
   google.accounts.oauth2.initTokenClient({
     client_id: '407510624928-rnflaprfag2todcb172csojsva220grp.apps.googleusercontent.com',
     scope: 'email profile',
     callback: (resp) => {
-      if (resp.error) { showToast('Sign in failed'); return; }
+      if (resp.error) {
+        showToast('Google error: ' + resp.error);
+        return;
+      }
+      if (!resp.access_token) {
+        showToast('No access token received');
+        return;
+      }
       fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: 'Bearer ' + resp.access_token }
       })
       .then(r => r.json())
       .then(profile => {
+        if (!profile.email) {
+          showToast('Could not get email from Google');
+          return;
+        }
         const email = profile.email.toLowerCase();
         const name = profile.given_name || profile.name || email.split('@')[0];
         saveSession(email, name);
         setState({ user: { email, name } });
         loadAppData(email);
       })
-      .catch(() => showToast('Failed to get profile. Try again.'));
+      .catch(err => showToast('Profile error: ' + err.message));
     }
   }).requestAccessToken();
 }
@@ -380,9 +391,23 @@ function loadAppData(email) {
   fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
     .then(r => r.json())
     .then(data => {
-      // Always calculate round and locked status on frontend — Apps Script booleans can be strings
       const currentRound = getCurrentRound(data.matches);
       const roundLocked = isRoundLocked(data.matches, currentRound);
+
+      // If user signed in with Google but isn't registered yet — send to register
+      if (!data.currentUser) {
+        const savedName = state.user ? (state.user.name || email.split('@')[0]) : email.split('@')[0];
+        setState({
+          screen: 'register',
+          registerEmail: email,
+          registerName: savedName,
+          registerError: '',
+          data: { ...data, currentRound, roundLocked }
+        });
+        showToast('Please complete your registration to play');
+        return;
+      }
+
       setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
     })
     .catch(() => {
@@ -590,7 +615,7 @@ function renderRegister() {
       </div>
       <div class="register-field">
         <label class="register-label">EMAIL ADDRESS</label>
-        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" />
+        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" ${state.registerEmail ? 'readonly style="opacity:0.6"' : ''} />
       </div>
       <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>
         ${registering ? 'Registering...' : 'Register & Play'}
