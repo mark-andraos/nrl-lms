@@ -352,16 +352,24 @@ function signInWithGoogle() {}
 
 function handleGoogleCredential(response) {
   try {
+    if (!response || !response.credential) {
+      showToast('No credential received from Google');
+      return;
+    }
     // Decode the JWT credential returned by Google
-    const base64 = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const profile = JSON.parse(atob(base64));
+    const parts = response.credential.split('.');
+    if (parts.length < 2) { showToast('Invalid credential format'); return; }
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '=='.slice(0, (4 - base64.length % 4) % 4);
+    const profile = JSON.parse(atob(padded));
+    if (!profile.email) { showToast('No email in Google profile'); return; }
     const email = profile.email.toLowerCase();
     const name = profile.given_name || profile.name || email.split('@')[0];
     saveSession(email, name);
     setState({ user: { email, name } });
     loadAppData(email);
   } catch(err) {
-    showToast('Sign in failed. Try again.');
+    showToast('Sign in error: ' + err.message);
   }
 }
 
