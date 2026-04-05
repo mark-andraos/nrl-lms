@@ -348,49 +348,18 @@ function loadGoogle() {
   document.head.appendChild(s);
 }
 
-function signInWithGoogle() {}
-
-function handleGoogleCredential(response) {
-  try {
-    if (!response || !response.credential) {
-      showToast('No credential received from Google');
-      return;
-    }
-    // Decode the JWT credential returned by Google
-    const parts = response.credential.split('.');
-    if (parts.length < 2) { showToast('Invalid credential format'); return; }
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '=='.slice(0, (4 - base64.length % 4) % 4);
-    const profile = JSON.parse(atob(padded));
-    if (!profile.email) { showToast('No email in Google profile'); return; }
-    const email = profile.email.toLowerCase();
-    const name = profile.given_name || profile.name || email.split('@')[0];
-    saveSession(email, name);
-    setState({ user: { email, name } });
-    loadAppData(email);
-  } catch(err) {
-    showToast('Sign in error: ' + err.message);
-  }
+function signInWithGoogle() {
+  devSignIn();
 }
 
-function renderGoogleBtn() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    setTimeout(renderGoogleBtn, 300);
-    return;
-  }
-  const container = document.getElementById('google-signin-btn');
-  if (!container) return;
-  google.accounts.id.initialize({
-    client_id: '407510624928-rnflaprfag2todcb172csojsva220grp.apps.googleusercontent.com',
-    callback: handleGoogleCredential,
-    ux_mode: 'popup'
-  });
-  google.accounts.id.renderButton(container, {
-    theme: 'filled_black',
-    size: 'large',
-    width: 280,
-    text: 'signin_with'
-  });
+function devSignIn() {
+  const email = prompt('Enter your registered email address:');
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email'); return; }
+  const trimmed = email.trim().toLowerCase();
+  const name = trimmed.split('@')[0];
+  saveSession(trimmed, name);
+  setState({ user: { email: trimmed, name } });
+  loadAppData(trimmed);
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -582,7 +551,7 @@ function renderAuth() {
         <div class="auth-title-line2">Standing</div>
       </div>
       <div class="auth-tagline">Pick one team per round. Don't get eliminated.</div>
-      <div id="google-signin-btn" style="display:flex;justify-content:center;margin-bottom:0.75rem;"></div>
+      <button class="google-btn" id="google-sign-in">Sign in</button>
       <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">or</div><div class="auth-divider-line"></div></div>
       <button class="auth-btn-secondary" id="go-register">Register to play</button>
       <div class="auth-note">Already registered? Sign in above</div>
@@ -599,7 +568,8 @@ function renderAuth() {
 }
 
 function attachAuthListeners() {
-  renderGoogleBtn();
+  const btn = document.getElementById('google-sign-in');
+  if (btn) btn.onclick = signInWithGoogle;
   const reg = document.getElementById('go-register');
   if (reg) reg.onclick = () => setState({ screen: 'register', registerName: '', registerEmail: '', registerError: '' });
 }
