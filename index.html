@@ -342,12 +342,17 @@ let googleReady = false;
 function loadGoogle() {
   const s = document.createElement('script');
   s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.defer = true;
   s.onload = () => { googleReady = true; };
   document.head.appendChild(s);
 }
 
 function signInWithGoogle() {
-  if (!googleReady) { showToast('Google not loaded yet, try again'); return; }
+  if (typeof google === 'undefined' || !google.accounts) {
+    showToast('Google sign in not ready, try again in a moment');
+    return;
+  }
   google.accounts.oauth2.initTokenClient({
     client_id: '407510624928-rnflaprfag2todcb172csojsva220grp.apps.googleusercontent.com',
     scope: 'email profile',
