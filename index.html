@@ -1,94 +1,1042 @@
-// ============================================================
-// processMatchResults — call this inside updateNRLResults
-// after a match is marked as Final
-// ============================================================
-
-function processMatchResults() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const matchesSheet = ss.getSheetByName("Matches");
-  const tipsSheet = ss.getSheetByName("Tips");
-  const entrantsSheet = ss.getSheetByName("Entrants");
-  const resultsSheet = ss.getSheetByName("Results");
-
-  const matchesData = matchesSheet.getDataRange().getValues();
-  const tipsData = tipsSheet.getDataRange().getValues();
-  const entrantsData = entrantsSheet.getDataRange().getValues();
-  const resultsData = resultsSheet.getDataRange().getValues();
-
-  // Build a set of already-processed result keys (EntrantID-Round)
-  const processedKeys = new Set();
-  for (let i = 4; i < resultsData.length; i++) {
-    if (resultsData[i][8]) processedKeys.add(String(resultsData[i][8]));
-  }
-
-  // Loop through all finished matches
-  for (let i = 4; i < matchesData.length; i++) {
-    const row = matchesData[i];
-    const finished = row[11];
-    const isFinished = finished === true || finished === 'TRUE' || finished === 'true' || finished === 1;
-    if (!isFinished) continue;
-
-    const round  = Number(row[1]);
-    const winner = String(row[8]).trim();
-    const loser  = String(row[9]).trim();
-
-    if (!loser) continue; // skip draws for now — handle separately if needed
-
-    // Handle draws — loser field may contain "Team1,Team2"
-    const losers = loser.split(',').map(l => l.trim()).filter(Boolean);
-
-    // Find all tips for this round
-    for (let j = 4; j < tipsData.length; j++) {
-      const tip = tipsData[j];
-      if (!tip[0]) continue;
-
-      const entrantID = String(tip[2]);
-      const tipRound  = Number(tip[4]);
-      const tipTeam   = String(tip[5]).trim();
-
-      if (tipRound !== round) continue;
-
-      const resultKey = entrantID + '-' + round;
-      if (processedKeys.has(resultKey)) continue; // already processed
-
-      // Determine if this tip won or lost
-      const tipWon  = tipTeam === winner;
-      const tipLost = losers.includes(tipTeam);
-
-      if (!tipWon && !tipLost) continue; // match not relevant to this tip
-
-      const eliminated = tipLost;
-
-      // Write to Results sheet
-      const resultID = Utilities.getUuid().substring(0, 8);
-      resultsSheet.appendRow([
-        resultID,
-        'COMP001',
-        entrantID,
-        tip[3], // email
-        round,
-        tipTeam,
-        eliminated,
-        new Date(),
-        resultKey
-      ]);
-
-      processedKeys.add(resultKey);
-      Logger.log((eliminated ? '❌ Eliminated' : '✅ Survived') + ': ' + entrantID + ' (' + tipTeam + ') Round ' + round);
-
-      // If eliminated, update Alive = FALSE in Entrants sheet
-      if (eliminated) {
-        for (let k = 4; k < entrantsData.length; k++) {
-          if (String(entrantsData[k][0]) === entrantID) {
-            entrantsSheet.getRange(k + 1, 5).setValue(false);
-            entrantsData[k][4] = false; // update local cache too
-            Logger.log('Marked as eliminated in Entrants: ' + entrantsData[k][2]);
-            break;
-          }
-        }
-      }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>NRL Last Man Standing</title>
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="NRL LMS" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="LMS (XL icon).png" />
+  <link rel="apple-touch-icon" href="LMS (XL icon).png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #111111;
+      --blue-light: #f5f5f5;
+      --blue-dark: #000000;
+      --gold: #F5C842;
+      --gold-light: #FEF9E7;
+      --gold-dark: #C9A800;
+      --green: #2E7D32;
+      --green-light: #E8F5E9;
+      --red: #c0392b;
+      --red-light: #fdecea;
+      --amber: #b45309;
+      --amber-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111111;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-50); color: var(--gray-900); }
+    #root { height: 100%; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: #fff; position: relative; }
+
+    /* Auth */
+    .auth-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2.5rem 1.75rem 1.5rem; text-align: center; background: #111111; overflow-y: auto; }
+    .auth-logo-wrap { background: transparent; border-radius: 0; padding: 0; margin-bottom: 1.5rem; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; }
+    .auth-logo { width: 130px; height: 130px; object-fit: contain; }
+    .auth-title-wrap { margin-bottom: 0.75rem; }
+    .auth-title-line1 { font-size: 1.6rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
+    .auth-title-line2 { font-size: 1.6rem; font-weight: 800; color: #2E7D32; line-height: 1.1; }
+    .auth-tagline { font-size: 0.88rem; color: rgba(255,255,255,0.5); margin-bottom: 2rem; }
+    .google-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 1rem; border: none; border-radius: var(--radius-sm); background: #2E7D32; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-bottom: 0.75rem; }
+    .google-btn:hover { background: #1b5e20; }
+    .auth-note { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 2rem; }
+    .auth-howit { width: 100%; text-align: left; margin-bottom: 2rem; }
+    .auth-howit-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; margin-bottom: 1rem; }
+    .auth-howit-row { display: flex; align-items: center; gap: 12px; padding: 0.6rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8); border-bottom: none; }
+    .auth-howit-row:last-child { border-bottom: none; }
+    .auth-howit-row span:first-child { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+    .auth-credit { font-size: 0.72rem; color: rgba(255,255,255,0.2); margin-top: auto; padding-top: 1rem; }
+    .not-registered { margin-top: 1rem; padding: 0.75rem; background: rgba(245,200,66,0.1); border-radius: var(--radius-sm); font-size: 0.8rem; color: #F5C842; }
+    .auth-btn-secondary { display: flex; align-items: center; justify-content: center; width: 100%; padding: 1rem; border: 1.5px solid rgba(255,255,255,0.2); border-radius: var(--radius-sm); background: transparent; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-bottom: 0.75rem; }
+    .auth-btn-secondary:hover { background: rgba(255,255,255,0.08); }
+    .auth-divider { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 0.75rem; }
+    .auth-divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.12); }
+    .auth-divider-text { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+    .register-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2.5rem 1.75rem 1.5rem; text-align: center; background: #111111; overflow-y: auto; }
+    .register-back { align-self: flex-start; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 0.85rem; cursor: pointer; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 6px; }
+    .register-back:hover { color: #fff; }
+    .register-title { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; }
+    .register-sub { font-size: 0.88rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+    .register-field { width: 100%; margin-bottom: 1rem; text-align: left; }
+    .register-label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; display: block; letter-spacing: 0.04em; }
+    .register-input { width: 100%; padding: 0.875rem 1rem; background: #1a1a1a; border: 1.5px solid #2a2a2a; border-radius: var(--radius-sm); font-size: 0.95rem; color: #fff; outline: none; }
+    .register-input:focus { border-color: #F5C842; }
+    .register-input::placeholder { color: rgba(255,255,255,0.25); }
+    .register-btn { width: 100%; padding: 1rem; border: none; border-radius: var(--radius-sm); background: #2E7D32; font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; margin-top: 0.5rem; }
+    .register-btn:hover { background: #1b5e20; }
+    .register-btn:disabled { background: #333; color: rgba(255,255,255,0.3); cursor: not-allowed; }
+    .register-error { width: 100%; padding: 0.75rem; background: rgba(192,57,43,0.15); border-radius: var(--radius-sm); font-size: 0.82rem; color: #e74c3c; margin-bottom: 1rem; text-align: left; }
+    /* Header */
+
+    .header { padding: 0.75rem 1rem; border-bottom: 2px solid #F5C842; background: #111111; position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .header-inner { display: flex; align-items: center; gap: 10px; }
+    .header-logo { width: 32px; height: 32px; object-fit: contain; }
+    .header-title { font-size: 1rem; font-weight: 800; color: #F5C842; letter-spacing: -0.01em; }
+    .header-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 1px; }
+    .header-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F5C842; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #111111; cursor: pointer; flex-shrink: 0; }
+
+    /* Avatar dropdown */
+    .dropdown-wrap { position: relative; }
+    .dropdown-menu { position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 50; overflow: hidden; }
+    .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; font-size: 0.88rem; color: var(--gray-700); cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+    .dropdown-item:hover { background: var(--gray-50); }
+    .dropdown-item.danger { color: var(--red); }
+    .dropdown-item.danger:hover { background: var(--red-light); }
+    .dropdown-divider { height: 1px; background: var(--gray-100); }
+    .dropdown-user { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); }
+    .dropdown-user-name { font-size: 0.85rem; font-weight: 600; color: var(--gray-900); }
+    .dropdown-user-email { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* Username modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal { background: #fff; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 360px; }
+    .modal h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.35rem; }
+    .modal p { font-size: 0.82rem; color: var(--gray-500); margin-bottom: 1.25rem; }
+    .modal input { width: 100%; padding: 0.75rem 0.875rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--gray-900); outline: none; }
+    .modal input:focus { border-color: #F5C842; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+    .modal-btn { flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; }
+    .modal-btn-cancel { background: var(--gray-100); color: var(--gray-700); }
+    .modal-btn-save { background: #F5C842; color: #111111; }
+    .modal-btn-cancel:hover { background: var(--gray-200); }
+    .modal-btn-save:hover { background: #e6b800; }
+
+    /* Status pill */
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .pill-green { background: var(--green-light); color: var(--green); }
+    .pill-red { background: var(--red-light); color: var(--red); }
+    .pill-amber { background: var(--amber-light); color: var(--amber); }
+    .pill-blue { background: #FEF9E7; color: #8a6d00; }
+    .pill-gray { background: var(--gray-100); color: var(--gray-500); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green { background: var(--green); }
+    .dot-red { background: var(--red); }
+    .dot-amber { background: var(--amber); }
+
+    /* Main content */
+    .content { flex: 1; overflow-y: auto; padding-bottom: 5rem; }
+    .section { padding: 1rem; }
+    .section + .section { border-top: 1px solid var(--gray-100); }
+    .section-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
+
+    /* Status banner */
+    .status-banner { margin: 1rem; padding: 1rem; border-radius: var(--radius); display: flex; align-items: center; gap: 0.75rem; }
+    .status-banner.alive { background: var(--green-light); }
+    .status-banner.eliminated { background: var(--red-light); }
+    .status-banner.pending { background: var(--amber-light); }
+    .status-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .status-banner-text h3 { font-size: 0.95rem; font-weight: 700; }
+    .status-banner-text p { font-size: 0.8rem; margin-top: 2px; opacity: 0.8; }
+    .alive h3, .alive p { color: var(--green); }
+    .eliminated h3, .eliminated p { color: var(--red); }
+    .pending h3, .pending p { color: var(--amber); }
+
+    /* Lock notice */
+    .lock-notice { margin: 0 1rem 0.75rem; padding: 0.65rem 0.85rem; background: var(--amber-light); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--amber); display: flex; align-items: center; gap: 6px; }
+
+    /* Team grid */
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .team-btn { border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.65rem 0.5rem; text-align: center; font-size: 0.8rem; color: var(--gray-700); background: #fff; cursor: pointer; transition: all 0.12s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .team-btn:hover:not(:disabled) { border-color: #F5C842; background: #FEF9E7; }
+    .team-btn.selected { border: 2px solid #F5C842; background: #FEF9E7; color: #111111; font-weight: 700; }
+    .team-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .team-btn.used { opacity: 0.35; cursor: not-allowed; position: relative; }
+    .team-emoji { font-size: 1.2rem; }
+    .team-name { font-size: 0.75rem; }
+    .used-badge { font-size: 0.6rem; color: var(--gray-400); }
+
+    /* Submit button */
+    .submit-btn { width: 100%; padding: 0.85rem; background: #F5C842; color: #111111; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; margin-top: 1rem; cursor: pointer; transition: background 0.15s; }
+    .submit-btn:hover:not(:disabled) { background: #e6b800; }
+    .submit-btn:disabled { background: var(--gray-300); cursor: not-allowed; color: #fff; }
+
+    /* Tip confirmed */
+    .tip-confirmed { border-radius: var(--radius); padding: 1.25rem 1rem; text-align: center; border: 1.5px solid; }
+    .tip-confirmed-won { background: var(--green-light); border-color: var(--green); }
+    .tip-confirmed-won h3 { color: var(--green); }
+    .tip-confirmed-pending { background: var(--amber-light); border-color: var(--amber); }
+    .tip-confirmed-pending h3 { color: var(--amber); }
+    .tip-confirmed-lost { background: var(--red-light); border-color: var(--red); }
+    .tip-confirmed-lost h3 { color: var(--red); }
+    .tip-confirmed .big-emoji { font-size: 2rem; }
+    .tip-confirmed h3 { font-size: 1rem; font-weight: 700; margin-top: 0.25rem; }
+    .tip-confirmed p { font-size: 0.8rem; margin-top: 0.15rem; }
+    .change-tip-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--amber); background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+    /* History cards */
+    .tip-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.6rem; }
+    .tip-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .tip-card-team { font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .tip-card-match { font-size: 0.75rem; color: var(--gray-500); }
+
+    /* Standings */
+    .standings-row { display: flex; align-items: center; gap: 10px; padding: 0.7rem 0; border-bottom: 1px solid var(--gray-100); }
+    .standings-row:last-child { border-bottom: none; }
+    .standings-row.you { background: var(--blue-light); margin: 0 -1rem; padding: 0.7rem 1rem; }
+    .standings-rank { font-size: 0.8rem; color: var(--gray-400); width: 20px; text-align: center; flex-shrink: 0; }
+    .standings-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+    .standings-tip { font-size: 0.75rem; color: var(--gray-400); }
+    .you-badge { font-size: 0.65rem; color: var(--blue); font-weight: 600; margin-left: 4px; }
+
+    /* Rules */
+    .rules-wrap { padding: 1rem; }
+    .rules-card { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 0.75rem; }
+    .rules-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+    .rules-card-icon { font-size: 1rem; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rules-icon-blue { background: #E3F2FD; }
+    .rules-icon-green { background: var(--green-light); }
+    .rules-icon-amber { background: var(--amber-light); }
+    .rules-icon-red { background: var(--red-light); }
+    .rules-card-title { font-size: 0.88rem; font-weight: 700; color: var(--gray-900); }
+    .rules-item { display: flex; align-items: flex-start; gap: 8px; padding: 0.35rem 0; font-size: 0.82rem; color: var(--gray-700); line-height: 1.5; border-bottom: 1px solid var(--gray-100); }
+    .rules-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .rules-bullet { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-300); margin-top: 7px; flex-shrink: 0; }
+    .rules-pot-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.82rem; border-bottom: 1px solid var(--gray-100); }
+    .rules-pot-row:last-child { border-bottom: none; }
+    .rules-pot-label { color: var(--gray-500); }
+    .rules-pot-value { font-weight: 700; color: var(--gray-900); }
+    .outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .outcome-card { border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; }
+    .outcome-card-green { background: var(--green-light); }
+    .outcome-card-red { background: var(--red-light); }
+    .outcome-card-amber { background: var(--amber-light); }
+    .outcome-emoji { font-size: 1rem; }
+    .outcome-label { font-size: 0.75rem; font-weight: 700; color: var(--gray-700); margin: 3px 0 2px; }
+    .outcome-desc { font-size: 0.7rem; color: var(--gray-500); line-height: 1.4; }
+
+    /* Bottom nav */
+    .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111111; border-top: 2px solid #F5C842; display: flex; z-index: 20; padding-bottom: env(safe-area-inset-bottom); }
+    .tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.5rem 0.25rem 0.4rem; font-size: 0.65rem; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; gap: 2px; transition: color 0.12s; }
+    .tab.active { color: #F5C842; }
+    .tab-icon { font-size: 1.2rem; }
+
+    /* Admin */
+    .admin-section { padding: 1rem; }
+    .admin-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+    .admin-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.75rem; }
+    .admin-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .admin-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; font-size: 0.82rem; border-bottom: 1px solid var(--gray-100); }
+    .admin-row:last-child { border-bottom: none; }
+    .elim-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--red); color: var(--red); background: none; cursor: pointer; }
+    .elim-btn:hover { background: var(--red-light); }
+    .reinstate-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--green); color: var(--green); background: none; cursor: pointer; }
+
+    /* Loading */
+    .loading { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--gray-400); font-size: 0.85rem; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--gray-200); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%); background: var(--gray-900); color: #fff; padding: 0.6rem 1.2rem; border-radius: 20px; font-size: 0.82rem; font-weight: 500; z-index: 100; white-space: nowrap; animation: fadeInOut 3s forwards; }
+    @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(8px)} 10%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0} }
+
+    /* Round matches */
+    .match-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.8rem; }
+    .match-row:last-child { border-bottom: none; }
+    .match-teams { color: var(--gray-700); }
+    .match-score { font-weight: 600; color: var(--gray-900); }
+    .match-status { font-size: 0.7rem; color: var(--gray-400); }
+    .match-winner { color: var(--green); font-weight: 600; }
+    .match-loser { color: var(--gray-400); text-decoration: line-through; font-weight: 400; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 2rem 1rem; color: var(--gray-400); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxfwe51FBnnXy0N8btlDZcddwcsT_JlyLIVaiLZeWoFTngQvhot4su-tGJ-WmrDMqkR/exec';
+const ADMIN_EMAIL = 'andraos1992@gmail.com';
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+const clean = s => (s || '').trim();
+
+function getCurrentRound(matches) {
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+  let lastStarted = 0;
+  for (const m of matches) {
+    if (isTrue(m.started) && m.round > lastStarted) lastStarted = m.round;
+  }
+  if (lastStarted > 0) {
+    const currentRoundMatches = matches.filter(m => m.round === lastStarted);
+    const allFinished = currentRoundMatches.every(m => isTrue(m.finished));
+    if (allFinished) {
+      const nextRounds = matches.filter(m => m.round > lastStarted).map(m => m.round);
+      const nextRound = nextRounds.length ? Math.min(...nextRounds) : lastStarted;
+      return nextRound;
+    }
+    return lastStarted;
+  }
+  return 1;
+}
+
+function isRoundLocked(matches, round) {
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+  return matches.some(m => m.round === round && isTrue(m.started));
+}
+
+function getTipResult(tip, matches) {
+  const match = matches.find(m =>
+    m.round === tip.round &&
+    (clean(m.winner) === clean(tip.team) || clean(m.loser) === clean(tip.team) ||
+     clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team))
+  );
+  if (!match || !match.finished) return 'Pending';
+  if (!match.winner) return 'Draw';
+  if (clean(match.winner) === clean(tip.team)) return 'Won';
+  return 'Lost';
+}
+
+function getTeamEmoji(teams, name) {
+  const t = teams.find(t => clean(t.name) === clean(name));
+  return t ? t.emoji : '🏉';
+}
+
+function initials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// ── state ─────────────────────────────────────────────────────────────────────
+let state = {
+  screen: 'loading', // loading | auth | register | app
+  tab: 'tip',
+  user: null,
+  data: null,
+  toast: null,
+  submitting: false,
+  selectedTeam: null,
+  changingTip: false,
+  adminView: false,
+  showDropdown: false,
+  showUsernameModal: false,
+  usernameInput: '',
+  registerName: '',
+  registerEmail: '',
+  registerError: '',
+  registering: false,
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ── Google Identity ───────────────────────────────────────────────────────────
+let googleReady = false;
+
+function loadGoogle() {
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => { googleReady = true; };
+  document.head.appendChild(s);
+}
+
+function signInWithGoogle() {
+  if (!googleReady) { showToast('Google not loaded yet, try again'); return; }
+  google.accounts.oauth2.initTokenClient({
+    client_id: '407510624928-rnflaprfag2todcb172csojsva220grp.apps.googleusercontent.com',
+    scope: 'email profile',
+    callback: (resp) => {
+      if (resp.error) { showToast('Sign in failed'); return; }
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + resp.access_token }
+      })
+      .then(r => r.json())
+      .then(profile => {
+        const email = profile.email.toLowerCase();
+        const name = profile.given_name || profile.name || email.split('@')[0];
+        saveSession(email, name);
+        setState({ user: { email, name } });
+        loadAppData(email);
+      })
+      .catch(() => showToast('Failed to get profile. Try again.'));
+    }
+  }).requestAccessToken();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+function loadAppData(email) {
+  setState({ screen: 'loading' });
+  fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
+    .then(r => r.json())
+    .then(data => {
+      // Always calculate round and locked status on frontend — Apps Script booleans can be strings
+      const currentRound = getCurrentRound(data.matches);
+      const roundLocked = isRoundLocked(data.matches, currentRound);
+      setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
+    })
+    .catch(() => {
+      showToast('Failed to load data. Check connection.');
+      setState({ screen: 'auth' });
+    });
+}
+
+async function submitTip() {
+  if (!state.selectedTeam || state.submitting) return;
+  const { data, user } = state;
+  setState({ submitting: true });
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'submitTip',
+        email: user.email,
+        entrantID: data.currentUser.entrantID,
+        round: data.currentRound,
+        team: state.selectedTeam,
+        replaceTip: state.changingTip, // tell Apps Script to replace existing tip
+      })
+    });
+    const result = await resp.json();
+    if (result.error) { showToast(result.error); }
+    else {
+      showToast('Tip submitted! 🎉');
+
+      // Update local state immediately — no loading screen needed
+      const round = data.currentRound;
+      const entrantID = data.currentUser.entrantID;
+      const team = state.selectedTeam;
+      const existingTipIndex = state.data.tips.findIndex(
+        t => t.entrantID === entrantID && t.round === round
+      );
+      if (existingTipIndex >= 0) {
+        // Replace existing tip in local state
+        state.data.tips[existingTipIndex].team = team;
+        state.data.tips[existingTipIndex].timestamp = new Date().toISOString();
+      } else {
+        // Add new tip to local state
+        state.data.tips.push({
+          tipID: 'local-' + Date.now(),
+          competitionID: 'COMP001',
+          entrantID,
+          email: user.email,
+          round,
+          team,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      setState({ changingTip: false, selectedTeam: null, submitting: false });
+      return;
+    }
+  } catch { showToast('Failed to submit. Try again.'); }
+  setState({ submitting: false });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  setState({ toast: msg });
+  setTimeout(() => setState({ toast: null }), 3200);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const root = document.getElementById('root');
+  const { screen, tab, user, data, toast } = state;
+
+  if (screen === 'loading') {
+    root.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    return;
   }
 
-  Logger.log('processMatchResults complete.');
+  if (screen === 'auth') {
+    root.innerHTML = renderAuth();
+    attachAuthListeners();
+    return;
+  }
+
+  if (screen === 'register') {
+    root.innerHTML = renderRegister();
+    attachRegisterListeners();
+    return;
+  }
+
+  // Save scroll position before re-render
+  const contentEl = document.querySelector('.content');
+  const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
+  // App
+  let mainContent = '';
+  if (tab === 'tip') mainContent = renderTipTab();
+  else if (tab === 'history') mainContent = renderHistoryTab();
+  else if (tab === 'standings') mainContent = renderStandingsTab();
+  else if (tab === 'rules') mainContent = renderRulesTab();
+
+  const cu = data.currentUser;
+  const avatarLabel = cu ? initials(cu.name) : '?';
+
+  root.innerHTML = `
+    ${toast ? `<div class="toast">${toast}</div>` : ''}
+    <div class="header">
+      <div class="header-top">
+        <div class="header-inner">
+          <img src="LMS (XL icon).png" class="header-logo" alt="LMS" />
+          <div>
+          <div class="header-title">Last Man Standing</div>
+          <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
+        </div></div>
+        <div class="dropdown-wrap">
+          <div class="header-avatar" onclick="toggleDropdown()">${avatarLabel}</div>
+          ${state.showDropdown ? `
+          <div class="dropdown-menu" id="dropdown">
+            <div class="dropdown-user">
+              <div class="dropdown-user-name">${cu ? cu.name : ''}</div>
+              <div class="dropdown-user-email">${user ? user.email : ''}</div>
+            </div>
+            <button class="dropdown-item" onclick="openUsernameModal()">✏️ Update username</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" onclick="signOut()">🚪 Sign out</button>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="content">${mainContent}</div>
+    <div class="tab-bar">
+      <button class="tab ${tab==='tip'?'active':''}" onclick="setTab('tip')"><span class="tab-icon">✏️</span>My Tip</button>
+      <button class="tab ${tab==='history'?'active':''}" onclick="setTab('history')"><span class="tab-icon">📋</span>History</button>
+      <button class="tab ${tab==='standings'?'active':''}" onclick="setTab('standings')"><span class="tab-icon">🏆</span>Standings</button>
+      <button class="tab ${tab==='rules'?'active':''}" onclick="setTab('rules')"><span class="tab-icon">📖</span>Rules</button>
+    </div>
+    ${state.showUsernameModal ? `
+    <div class="modal-overlay" onclick="closeUsernameModal(event)">
+      <div class="modal">
+        <h3>Update username</h3>
+        <p>This is the name shown on the Standings page</p>
+        <input type="text" id="username-input" placeholder="Enter your name" value="${state.usernameInput}" oninput="state.usernameInput = this.value" maxlength="30" />
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" onclick="setState({showUsernameModal:false})">Cancel</button>
+          <button class="modal-btn modal-btn-save" onclick="saveUsername()">Save</button>
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+  attachAppListeners();
+
+  // Restore scroll position after re-render
+  const newContentEl = document.querySelector('.content');
+  if (newContentEl && scrollTop) newContentEl.scrollTop = scrollTop;
 }
+
+// ── Auth screen ───────────────────────────────────────────────────────────────
+function renderAuth() {
+  return `
+    <div class="auth-screen">
+      <div class="auth-logo-wrap">
+        <img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" />
+      </div>
+      <div class="auth-title-wrap">
+        <div class="auth-title-line1">NRL Last Man</div>
+        <div class="auth-title-line2">Standing</div>
+      </div>
+      <div class="auth-tagline">Pick one team per round. Don't get eliminated.</div>
+      <button class="google-btn" id="google-sign-in">Sign in</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">or</div><div class="auth-divider-line"></div></div>
+      <button class="auth-btn-secondary" id="go-register">Register to play</button>
+      <div class="auth-note">Already registered? Sign in above</div>
+      <div class="auth-howit">
+        <div class="auth-howit-title">HOW IT WORKS</div>
+        <div class="auth-howit-row"><span>🎯</span><span>Pick one NRL team per round</span></div>
+        <div class="auth-howit-row"><span>🚫</span><span>Can't reuse teams across rounds</span></div>
+        <div class="auth-howit-row"><span>❌</span><span>Wrong tip = eliminated</span></div>
+        <div class="auth-howit-row"><span>🏆</span><span>Last person standing wins</span></div>
+      </div>
+      <div class="auth-credit">App built by Mark Andraos</div>
+    </div>
+  `;
+}
+
+function attachAuthListeners() {
+  const btn = document.getElementById('google-sign-in');
+  if (btn) btn.onclick = signInWithGoogle;
+  const reg = document.getElementById('go-register');
+  if (reg) reg.onclick = () => setState({ screen: 'register', registerName: '', registerEmail: '', registerError: '' });
+}
+
+// ── Register screen ──────────────────────────────────────────────────────────
+function renderRegister() {
+  const { registerError, registering } = state;
+  return `
+    <div class="register-screen">
+      <button class="register-back" onclick="setState({screen:'auth'})">← Back to sign in</button>
+      <div class="auth-logo-wrap">
+        <img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" />
+      </div>
+      <div class="register-title">Join the competition</div>
+      <div class="register-sub">NRL 2026 Last Man Standing</div>
+      ${registerError ? `<div class="register-error">${registerError}</div>` : ''}
+      <div class="register-field">
+        <label class="register-label">CREATE USERNAME</label>
+        <input class="register-input" id="reg-name" type="text" placeholder="e.g. Ross80" maxlength="30" value="${state.registerName}" />
+      </div>
+      <div class="register-field">
+        <label class="register-label">EMAIL ADDRESS</label>
+        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" />
+      </div>
+      <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>
+        ${registering ? 'Registering...' : 'Register & Play'}
+      </button>
+      <div class="auth-credit" style="margin-top:2rem;">App built by Mark Andraos</div>
+    </div>
+  `;
+}
+
+function attachRegisterListeners() {
+  const nameInput = document.getElementById('reg-name');
+  const emailInput = document.getElementById('reg-email');
+  const submitBtn = document.getElementById('reg-submit');
+  if (nameInput) nameInput.oninput = e => { state.registerName = e.target.value; };
+  if (emailInput) emailInput.oninput = e => { state.registerEmail = e.target.value; };
+  if (submitBtn) submitBtn.onclick = submitRegistration;
+}
+
+async function submitRegistration() {
+  const name = state.registerName.trim();
+  const email = state.registerEmail.trim().toLowerCase();
+
+  if (!name) { setState({ registerError: 'Please enter your name.' }); return; }
+  if (!email || !email.includes('@')) { setState({ registerError: 'Please enter a valid email address.' }); return; }
+
+  setState({ registering: true, registerError: '' });
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'registerEntrant', name, email })
+    });
+    const result = await resp.json();
+
+    if (result.error) {
+      setState({ registering: false, registerError: result.error });
+      return;
+    }
+
+    // Registration successful — auto sign in
+    showToast('Welcome to the comp! 🎉');
+    saveSession(email, name);
+    setState({ user: { email, name }, registering: false, registerError: '' });
+    loadAppData(email);
+
+  } catch {
+    setState({ registering: false, registerError: 'Registration failed. Check your connection and try again.' });
+  }
+}
+
+// ── My Tip tab ────────────────────────────────────────────────────────────────
+function renderTipTab() {
+  const { data, selectedTeam, submitting, changingTip } = state;
+  const cu = data.currentUser;
+
+  if (!cu) {
+    return `<div class="empty">You are not registered in this competition.<br>Contact the admin to be added.</div>`;
+  }
+
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID);
+  const myTipThisRound = myTips.find(t => t.round === data.currentRound);
+  const usedTeams = new Set(myTips.map(t => clean(t.team)));
+
+  // Determine banner based on current round tip result, not just alive status
+  const myTipForBanner = data.tips.find(t => t.entrantID === cu.entrantID && t.round === data.currentRound);
+  const bannerResult = myTipForBanner ? getTipResult(myTipForBanner, data.matches) : null;
+
+  let aliveHtml;
+  if (!cu.alive) {
+    // Eliminated
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+  } else if (bannerResult === 'Lost') {
+    // Tip lost this round — show red even if alive flag not yet updated
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
+  } else if (bannerResult === 'Pending' || bannerResult === null) {
+    // No result yet — show amber
+    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip locked in — awaiting result' : 'No tip yet — round is open'}</h3><p>${myTipForBanner ? 'Fingers crossed!' : 'Pick your team below'}</p></div></div>`;
+  } else {
+    // Won or alive with no issue
+    aliveHtml = `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`;
+  }
+
+  // Already tipped and not changing
+  if (myTipThisRound && !changingTip) {
+    const result = getTipResult(myTipThisRound, data.matches);
+    const emoji = getTeamEmoji(data.teams, myTipThisRound.team);
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    const cardClass = result === 'Won' ? 'tip-confirmed-won' : result === 'Lost' ? 'tip-confirmed-lost' : 'tip-confirmed-pending';
+    return `
+      ${aliveHtml}
+      <div class="section">
+        <div class="section-label">Round ${data.currentRound} tip</div>
+        <div class="tip-confirmed ${cardClass}">
+          <div class="big-emoji">${emoji}</div>
+          <h3>${clean(myTipThisRound.team)}</h3>
+          <p><span class="pill ${pillClass}">${result}</span></p>
+          ${!data.roundLocked ? `<button class="change-tip-btn" onclick="changeTip()">Change tip</button>` : ''}
+        </div>
+      </div>
+      ${renderRoundMatches()}
+    `;
+  }
+
+  // Eliminated — no tip needed
+  if (!cu.alive) {
+    return `${aliveHtml}${renderRoundMatches()}`;
+  }
+
+  // Round locked, no tip submitted
+  if (data.roundLocked && !myTipThisRound) {
+    return `
+      ${aliveHtml}
+      <div class="lock-notice">⏰ Round ${data.currentRound} is locked — you missed this round</div>
+      ${renderRoundMatches()}
+    `;
+  }
+
+  // Pick team
+  const roundMatches = data.matches.filter(m => m.round === data.currentRound);
+  const teamsPlayingThisRound = new Set(roundMatches.flatMap(m => [clean(m.home), clean(m.away)]));
+  const isTrue2 = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+  const teamsAlreadyPlayed = new Set(roundMatches.filter(m => isTrue2(m.started)).flatMap(m => [clean(m.home), clean(m.away)]));
+
+  const sortedTeams = [...data.teams].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const teamBtns = sortedTeams.map(t => {
+    const name = clean(t.name);
+    const isUsed = usedTeams.has(name);
+    const isPlayed = teamsAlreadyPlayed.has(name);
+    const isNotPlaying = !teamsPlayingThisRound.has(name);
+    const isSelected = selectedTeam === name;
+    const disabled = isUsed || isPlayed || isNotPlaying;
+    const cls = isSelected ? 'selected' : (isUsed || isPlayed || isNotPlaying) ? 'used' : '';
+    const badge = isUsed ? '<div class="used-badge">used</div>' : isNotPlaying ? '<div class="used-badge">bye</div>' : isPlayed ? '<div class="used-badge">played</div>' : '';
+    const selectedStyle = isSelected && t.colour ? `style="border-color:${t.colour};background:${t.colour}18;color:${t.colour};"` : '';
+    const selectedNameStyle = isSelected && t.colour ? `style="color:${t.colour};font-weight:700;"` : '';
+    return `<button class="team-btn ${cls}" ${disabled ? 'disabled' : ''} onclick="selectTeam('${name}')" data-team="${name}" ${selectedStyle}>
+      <span class="team-emoji">${t.emoji}</span>
+      <span class="team-name" ${selectedNameStyle}>${name}</span>
+      ${badge}
+    </button>`;
+  }).join('');
+
+  return `
+    ${aliveHtml}
+    <div class="section">
+      <div class="section-label">Round ${data.currentRound} · Pick your team</div>
+      ${!data.roundLocked ? `<div class="lock-notice">⏰ Locks when the first game kicks off</div>` : ''}
+      <div class="team-grid">${teamBtns}</div>
+      <button class="submit-btn" ${!selectedTeam || submitting ? 'disabled' : ''} onclick="submitTip()">
+        ${submitting ? 'Submitting...' : selectedTeam ? `Confirm — ${selectedTeam}` : 'Select a team'}
+      </button>
+    </div>
+    ${renderRoundMatches()}
+  `;
+}
+
+function renderRoundMatches() {
+  const { data } = state;
+  const matches = data.matches.filter(m => m.round === data.currentRound).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+  if (!matches.length) return '';
+  const rows = matches.map(m => {
+    const dt = new Date(m.dateTime);
+    const dateStr = dt.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
+    const timeStr = dt.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+    const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+    if (isTrue(m.finished)) {
+      const homeWon = clean(m.winner) === clean(m.home);
+      const awayWon = clean(m.winner) === clean(m.away);
+      const homeClass = homeWon ? 'match-winner' : 'match-teams match-loser';
+      const awayClass = awayWon ? 'match-winner' : 'match-teams match-loser';
+      return `<div class="match-row">
+        <div><span class="${homeClass}">${clean(m.home)}</span> <span class="match-teams"> vs </span><span class="${awayClass}">${clean(m.away)}</span></div>
+        <div><span class="match-score">${m.homeScore}–${m.awayScore}</span></div>
+      </div>`;
+    }
+    if (isTrue(m.started)) {
+      return `<div class="match-row">
+        <div class="match-teams">${clean(m.home)} vs ${clean(m.away)}</div>
+        <div><span class="pill pill-amber">Live</span></div>
+      </div>`;
+    }
+    return `<div class="match-row">
+      <div class="match-teams">${clean(m.home)} vs ${clean(m.away)}</div>
+      <div class="match-status">${dateStr} ${timeStr}</div>
+    </div>`;
+  }).join('');
+  return `<div class="section"><div class="section-label">Round ${data.currentRound} fixtures</div>${rows}</div>`;
+}
+
+// ── History tab ───────────────────────────────────────────────────────────────
+function renderHistoryTab() {
+  const { data } = state;
+  const cu = data.currentUser;
+  if (!cu) return `<div class="empty">Not registered</div>`;
+
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID)
+    .sort((a, b) => b.round - a.round);
+
+  if (!myTips.length) return `<div class="empty">No tips submitted yet</div>`;
+
+  const cards = myTips.map(tip => {
+    const result = getTipResult(tip, data.matches);
+    const emoji = getTeamEmoji(data.teams, tip.team);
+    const match = data.matches.find(m =>
+      m.round === tip.round &&
+      (clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team))
+    );
+    const matchStr = match
+      ? (match.finished ? `${clean(match.home)} ${match.homeScore}–${match.awayScore} ${clean(match.away)}` : `${clean(match.home)} vs ${clean(match.away)}`)
+      : '';
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    return `<div class="tip-card">
+      <div class="tip-card-header">
+        <span class="pill pill-blue">Rd ${tip.round}</span>
+        <span class="pill ${pillClass}">${result}</span>
+      </div>
+      <div class="tip-card-team">${emoji} ${clean(tip.team)}</div>
+      <div class="tip-card-match">${matchStr}</div>
+    </div>`;
+  }).join('');
+
+  const won = myTips.filter(t => getTipResult(t, data.matches) === 'Won').length;
+  const lost = myTips.filter(t => getTipResult(t, data.matches) === 'Lost').length;
+
+  return `
+    <div class="section">
+      <div style="display:flex;gap:8px;margin-bottom:0.75rem;">
+        <div style="flex:1;background:var(--green-light);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green)">${won}</div>
+          <div style="font-size:0.7rem;color:var(--green)">Survived</div>
+        </div>
+        <div style="flex:1;background:var(--red-light);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--red)">${lost}</div>
+          <div style="font-size:0.7rem;color:var(--red)">Lost</div>
+        </div>
+        <div style="flex:1;background:var(--gray-100);border-radius:8px;padding:0.6rem;text-align:center;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--gray-700)">${myTips.length}</div>
+          <div style="font-size:0.7rem;color:var(--gray-500)">Total</div>
+        </div>
+      </div>
+      ${cards}
+    </div>
+  `;
+}
+
+// ── Standings tab ─────────────────────────────────────────────────────────────
+function renderStandingsTab() {
+  const { data } = state;
+  const cu = data.currentUser;
+  const { currentRound, roundLocked } = data;
+
+  const alive = data.entrants.filter(e => e.alive);
+  const eliminated = data.entrants.filter(e => !e.alive);
+
+  function getTipDisplay(entrant) {
+    const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound);
+    if (!tip) return '<span class="pill pill-gray">No tip</span>';
+    if (!roundLocked) return '<span class="pill pill-amber">Tipped ✓</span>';
+    const emoji = getTeamEmoji(data.teams, tip.team);
+    const result = getTipResult(tip, data.matches);
+    const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
+    return `<span class="pill ${pillClass}">${emoji} ${clean(tip.team)}</span>`;
+  }
+
+  function getElimRound(entrant) {
+    // Find latest round they have a Lost result
+    const lostTips = data.tips.filter(t => t.entrantID === entrant.entrantID && getTipResult(t, data.matches) === 'Lost');
+    if (!lostTips.length) return '—';
+    return 'Rd ' + Math.max(...lostTips.map(t => t.round));
+  }
+
+  const aliveRows = alive.map((e, i) => {
+    const isYou = cu && e.entrantID === cu.entrantID;
+    return `<div class="standings-row ${isYou ? 'you' : ''}">
+      <div class="standings-rank">${i + 1}</div>
+      <div class="standings-name">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div>${getTipDisplay(e)}</div>
+    </div>`;
+  }).join('');
+
+  const elimRows = eliminated.map(e => {
+    const isYou = cu && e.entrantID === cu.entrantID;
+    return `<div class="standings-row ${isYou ? 'you' : ''}" style="opacity:0.6">
+      <div class="standings-rank">—</div>
+      <div class="standings-name" style="text-decoration:line-through">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div><span class="pill pill-red">Out ${getElimRound(e)}</span></div>
+    </div>`;
+  }).join('');
+
+  const lockNote = roundLocked
+    ? `<div class="lock-notice">🔒 Round locked — tips are now visible</div>`
+    : `<div class="lock-notice">👀 Tips hidden until round locks</div>`;
+
+  return `
+    <div class="section">
+      ${lockNote}
+      <div class="section-label">${alive.length} still alive</div>
+      ${aliveRows || '<div class="empty">No survivors yet</div>'}
+    </div>
+    ${eliminated.length ? `<div class="section"><div class="section-label">${eliminated.length} eliminated</div>${elimRows}</div>` : ''}
+  `;
+}
+
+// ── Rules tab ─────────────────────────────────────────────────────────────────
+function renderRulesTab() {
+  return `
+    <div class="rules-wrap">
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-blue">🎯</div>
+          <div class="rules-card-title">The objective</div>
+        </div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Be the last player remaining in the competition</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Each round, pick one NRL team — if they win, you survive</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot pick the same team twice in the same competition</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-green">💰</div>
+          <div class="rules-card-title">The pot</div>
+        </div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value"><span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span></span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Prize</span><span class="rules-pot-value">Winner takes all</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Reset</span><span class="rules-pot-value">Once a champion is crowned</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-amber">📝</div>
+          <div class="rules-card-title">How to tip</div>
+        </div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Select exactly one team per round</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Tips lock when the first game of the round kicks off</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot change your tip after lockout</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>You cannot tip a team that has a bye this round</span></div>
+        <div class="rules-item"><div class="rules-bullet"></div><span>Team selections reset when a new competition begins</span></div>
+      </div>
+
+      <div class="rules-card">
+        <div class="rules-card-header">
+          <div class="rules-card-icon rules-icon-red">🏁</div>
+          <div class="rules-card-title">Outcomes</div>
+        </div>
+        <div class="outcome-grid">
+          <div class="outcome-card outcome-card-green"><div class="outcome-emoji">✅</div><div class="outcome-label">Win</div><div class="outcome-desc">Your team wins — you survive</div></div>
+          <div class="outcome-card outcome-card-red"><div class="outcome-emoji">❌</div><div class="outcome-label">Loss</div><div class="outcome-desc">Your team loses — eliminated</div></div>
+          <div class="outcome-card outcome-card-red"><div class="outcome-emoji">🤝</div><div class="outcome-label">Draw</div><div class="outcome-desc">Match draws — eliminated</div></div>
+          <div class="outcome-card outcome-card-amber"><div class="outcome-emoji">⏰</div><div class="outcome-label">No tip</div><div class="outcome-desc">Miss lockout — eliminated</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Global actions ────────────────────────────────────────────────────────────
+function setTab(t) { setState({ tab: t }); }
+function selectTeam(name) { if (state.data.roundLocked) return; setState({ selectedTeam: name }); }
+function changeTip() { setState({ changingTip: true, selectedTeam: null }); }
+function signOut() {
+  if (confirm('Sign out?')) {
+    clearSession();
+    setState({ screen: 'auth', user: null, data: null, tab: 'tip', selectedTeam: null });
+  }
+}
+
+function toggleDropdown() {
+  setState({ showDropdown: !state.showDropdown });
+  // Close on outside click
+  if (!state.showDropdown) {
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdownOutside, { once: true });
+    }, 0);
+  }
+}
+
+function closeDropdownOutside(e) {
+  if (!e.target.closest('.dropdown-wrap')) {
+    setState({ showDropdown: false });
+  }
+}
+
+function openUsernameModal() {
+  const currentName = state.data && state.data.currentUser ? state.data.currentUser.name : '';
+  setState({ showDropdown: false, showUsernameModal: true, usernameInput: currentName });
+  setTimeout(() => {
+    const input = document.getElementById('username-input');
+    if (input) { input.focus(); input.select(); }
+  }, 50);
+}
+
+function closeUsernameModal(e) {
+  if (e.target.classList.contains('modal-overlay')) setState({ showUsernameModal: false });
+}
+
+async function saveUsername() {
+  const name = state.usernameInput.trim();
+  if (!name) { showToast('Please enter a name'); return; }
+  if (!state.data || !state.data.currentUser) return;
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'updateUsername',
+        entrantID: state.data.currentUser.entrantID,
+        name
+      })
+    });
+    const result = await resp.json();
+    if (result.error) { showToast(result.error); return; }
+    // Update locally so UI reflects immediately without a reload
+    state.data.currentUser.name = name;
+    const entrant = state.data.entrants.find(e => e.entrantID === state.data.currentUser.entrantID);
+    if (entrant) entrant.name = name;
+    setState({ showUsernameModal: false });
+    showToast('Username updated! ✓');
+  } catch {
+    showToast('Failed to save. Try again.');
+  }
+}
+
+function attachAppListeners() {}
+
+// ── Persistent login via localStorage ────────────────────────────────────────
+const STORAGE_KEY = 'nrl_lms_user';
+
+function saveSession(email, name) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, name })); } catch(e) {}
+}
+
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; }
+}
+
+function clearSession() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadGoogle();
+
+// Auto-login if session exists
+const saved = loadSession();
+if (saved && saved.email) {
+  setState({ user: saved, screen: 'loading' });
+  loadAppData(saved.email);
+} else {
+  setState({ screen: 'auth' });
+}
+</script>
+</body>
+</html>
