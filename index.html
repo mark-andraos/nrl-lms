@@ -354,6 +354,8 @@ let state = {
   registerError: '',
   registering: false,
   showNotifications: false,
+  notifDirty: false,
+  notifSaved: false,
 };
 
 function setState(patch) {
@@ -1055,8 +1057,10 @@ function renderNotificationsScreen() {
   if (!cu) return '<div class="empty">Not registered</div>';
 
   const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
-
-  const checked = (val) => isTrue(val) ? 'checked' : '';
+  const checked = (val) => {
+    const result = isTrue(val);
+    return result ? 'checked' : '';
+  };
 
   return `
     ${toast ? `<div class="toast">${toast}</div>` : ''}
@@ -1069,7 +1073,7 @@ function renderNotificationsScreen() {
             <div class="header-sub">Manage your preferences</div>
           </div>
         </div>
-        <button class="notif-back" onclick="setState({screen:'app'})">← Back</button>
+        <button class="notif-back" onclick="setState({screen:'app', notifDirty:false, notifSaved:false})">← Back</button>
       </div>
     </div>
     <div class="notif-screen">
@@ -1084,11 +1088,11 @@ function renderNotificationsScreen() {
           <div class="notif-toggles">
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">EMAIL</div>
-              <label class="toggle"><input type="checkbox" id="rr-email" ${checked(cu.notifyRoundReminder_Email)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="rr-email" ${checked(cu.notifyRoundReminder_Email)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1101,11 +1105,11 @@ function renderNotificationsScreen() {
           <div class="notif-toggles">
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">EMAIL</div>
-              <label class="toggle"><input type="checkbox" id="mt-email" ${checked(cu.notifyMissedTip_Email)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="mt-email" ${checked(cu.notifyMissedTip_Email)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1118,16 +1122,18 @@ function renderNotificationsScreen() {
           <div class="notif-toggles">
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">EMAIL</div>
-              <label class="toggle"><input type="checkbox" id="res-email" ${checked(cu.notifyResult_Email)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="res-email" ${checked(cu.notifyResult_Email)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)}><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)} onchange="state.notifDirty=true;state.notifSaved=false;render()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
 
-        <button class="notif-save-btn" onclick="saveNotifications()">Save preferences</button>
+        <button class="notif-save-btn" onclick="saveNotifications()" ${!state.notifDirty || state.notifSaved ? 'disabled style="background:var(--gray-300);color:#fff;cursor:not-allowed;"' : ''}>
+          ${state.notifSaved ? 'Saved!' : 'Save preferences'}
+        </button>
       </div>
 
       <div style="padding: 0 1rem 1rem; font-size: 0.75rem; color: var(--gray-400);">
@@ -1168,7 +1174,8 @@ async function saveNotifications() {
     cu.notifyResult_Email        = get('res-email');
     cu.notifyResult_Push         = get('res-push');
 
-    showToast('Preferences saved ✓');
+    setState({ notifDirty: false, notifSaved: true });
+    setTimeout(() => setState({ notifSaved: false }), 3000);
   } catch { showToast('Failed to save. Try again.'); }
 }
 
