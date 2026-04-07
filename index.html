@@ -655,7 +655,7 @@ function renderRegister() {
       </div>
       <div class="register-field">
         <label class="register-label">EMAIL ADDRESS</label>
-        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" ${state.registerEmail ? 'readonly style="opacity:0.6"' : ''} />
+        <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" ${state.googleEmail ? 'readonly style="opacity:0.6"' : ''} />
       </div>
       <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>
         ${registering ? 'Registering...' : 'Register & Play'}
