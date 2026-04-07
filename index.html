@@ -1115,7 +1115,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)} onchange="markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1132,7 +1132,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)} onchange="markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1149,7 +1149,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)} onchange="markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1158,8 +1158,7 @@ function renderNotificationsScreen() {
       </div>
 
       <div style="padding: 0 1rem 1rem; font-size: 0.75rem; color: var(--gray-400);">
-        Enabling push notifications will prompt your browser for permission.
-        <span style="color:#2E7D32;cursor:pointer;text-decoration:underline;" onclick="requestPushPermission()">Enable push now</span>
+        Turning on push will prompt your browser for permission.
       </div>
     </div>
   `;
@@ -1264,7 +1263,11 @@ function requestPushPermission() {
   if (_oneSignal) {
     _oneSignal.showNativePrompt();
   } else {
-    showToast('Push not ready yet — try again in a moment');
+    // Try via deferred queue as fallback
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.showNativePrompt();
+    });
   }
 }
 
