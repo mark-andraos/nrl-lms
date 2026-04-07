@@ -1116,9 +1116,24 @@ function renderWelcomeScreen() {
         <div class="welcome-item"><div class="welcome-item-emoji">✅</div><div><strong>Your result is in</strong> — win or lose, you'll know instantly</div></div>
       </div>
       <button class="welcome-enable-btn" onclick="enableNotificationsAndContinue()">Enable notifications</button>
-      <button class="welcome-skip-btn" onclick="setState({screen:'app'})">Skip for now</button>
+      <button class="welcome-skip-btn" onclick="skipWelcome()">Skip for now</button>
     </div>
   `;
+}
+
+function skipWelcome() {
+  if (state.data) {
+    setState({ screen: 'app' });
+  } else {
+    // Data not ready yet — wait for it then go to app
+    setState({ screen: 'loading' });
+    const interval = setInterval(() => {
+      if (state.data) {
+        clearInterval(interval);
+        setState({ screen: 'app' });
+      }
+    }, 200);
+  }
 }
 
 async function enableNotificationsAndContinue() {
