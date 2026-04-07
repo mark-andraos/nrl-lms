@@ -1227,16 +1227,21 @@ function clearSession() {
 loadGoogle();
 
 // ── OneSignal push notifications ─────────────────────────────────────────────
+let _oneSignal = null;
+
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
     appId: '330c02cd-2f86-4c73-b96a-38d758ba05e9',
     safari_web_id: 'web.onesignal.auto.4ddec2dc-5c48-40c7-bde8-da7159bee241',
-    notifyButton: { enable: false }, // we handle opt-in ourselves
+    notifyButton: { enable: false },
     welcomeNotification: { disable: true }
   });
 
-  // After user is signed in and registered, save their OneSignal Player ID
+  // Store instance globally so requestPushPermission can access it
+  _oneSignal = OneSignal;
+
+  // After user opts in, save their Player ID to the sheet
   OneSignal.on('subscriptionChange', async function(isSubscribed) {
     if (isSubscribed && state.data && state.data.currentUser) {
       const playerID = await OneSignal.getUserId();
@@ -1249,14 +1254,17 @@ OneSignalDeferred.push(async function(OneSignal) {
             playerID
           })
         });
+        showToast('Push notifications enabled! ✓');
       }
     }
   });
 });
 
 function requestPushPermission() {
-  if (typeof OneSignal !== 'undefined') {
-    OneSignal.showNativePrompt();
+  if (_oneSignal) {
+    _oneSignal.showNativePrompt();
+  } else {
+    showToast('Push not ready yet — try again in a moment');
   }
 }
 
