@@ -876,8 +876,19 @@ function renderStandingsTab() {
   const cu = data.currentUser;
   const { currentRound, roundLocked } = data;
 
-  const alive = data.entrants.filter(e => e.alive);
-  const eliminated = data.entrants.filter(e => !e.alive);
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+  const alive = data.entrants
+    .filter(e => isTrue(e.alive))
+    .sort((a, b) => {
+      // Current user always first
+      if (cu && a.entrantID === cu.entrantID) return -1;
+      if (cu && b.entrantID === cu.entrantID) return 1;
+      // Rest alphabetically
+      return a.name.localeCompare(b.name);
+    });
+  const eliminated = data.entrants
+    .filter(e => !isTrue(e.alive))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   function getTipDisplay(entrant) {
     const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound);
