@@ -1158,42 +1158,39 @@ async function saveNotifications() {
 
   const get = id => document.getElementById(id)?.checked || false;
 
-  try {
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'updateNotifications',
-        entrantID: cu.entrantID,
-        notifyRoundReminder_Email: get('rr-email'),
-        notifyRoundReminder_Push:  get('rr-push'),
-        notifyMissedTip_Email:     get('mt-email'),
-        notifyMissedTip_Push:      get('mt-push'),
-        notifyResult_Email:        get('res-email'),
-        notifyResult_Push:         get('res-push'),
-      })
-    });
-    const result = await resp.json();
-    if (result.error) { showToast(result.error); return; }
+  // Grab values immediately
+  const prefs = {
+    notifyRoundReminder_Email: get('rr-email'),
+    notifyRoundReminder_Push:  get('rr-push'),
+    notifyMissedTip_Email:     get('mt-email'),
+    notifyMissedTip_Push:      get('mt-push'),
+    notifyResult_Email:        get('res-email'),
+    notifyResult_Push:         get('res-push'),
+  };
 
-    // Update local state
-    cu.notifyRoundReminder_Email = get('rr-email');
-    cu.notifyRoundReminder_Push  = get('rr-push');
-    cu.notifyMissedTip_Email     = get('mt-email');
-    cu.notifyMissedTip_Push      = get('mt-push');
-    cu.notifyResult_Email        = get('res-email');
-    cu.notifyResult_Push         = get('res-push');
+  // Update UI instantly
+  const btn = document.getElementById('notif-save-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.style.background = 'var(--gray-300)';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = 'Saved!';
+  }
 
-    state.notifDirty = false;
-    state.notifSaved = true;
-    const btn = document.getElementById('notif-save-btn');
-    if (btn) {
-      btn.disabled = true;
-      btn.style.background = 'var(--gray-300)';
-      btn.style.color = '#fff';
-      btn.style.cursor = 'not-allowed';
-      btn.textContent = 'Saved!';
-    }
-  } catch { showToast('Failed to save. Try again.'); }
+  // Update local state immediately
+  Object.assign(cu, prefs);
+  state.notifDirty = false;
+  state.notifSaved = true;
+
+  // Save to sheet in background — user doesn't wait for this
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateNotifications', entrantID: cu.entrantID, ...prefs })
+  })
+  .then(r => r.json())
+  .then(result => { if (result.error) showToast(result.error); })
+  .catch(() => showToast('Failed to save to server. Try again.'));
 }
 
 function attachAppListeners() {}
