@@ -1259,8 +1259,26 @@ function requestPushPermission() {
   try {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
+      const permission = OneSignal.Notifications.permission;
+
+      // If already granted, just get the player ID — no need to prompt again
+      if (permission) {
+        const playerID = OneSignal.User.PushSubscription.id;
+        if (playerID && state.data && state.data.currentUser) {
+          fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'savePlayerID',
+              entrantID: state.data.currentUser.entrantID,
+              playerID
+            })
+          });
+        }
+        return;
+      }
+
+      // Otherwise request permission
       await OneSignal.Notifications.requestPermission();
-      // Save player ID after permission granted
       const playerID = OneSignal.User.PushSubscription.id;
       if (playerID && state.data && state.data.currentUser) {
         fetch(API_URL, {
