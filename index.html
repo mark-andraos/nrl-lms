@@ -358,6 +358,7 @@ let state = {
   showNotifications: false,
   notifDirty: false,
   notifSaved: false,
+  welcomeName: '',
 };
 
 function setState(patch) {
@@ -392,7 +393,7 @@ function devSignIn() {
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
-function loadAppData(email) {
+function loadAppData(email, showWelcome) {
   setState({ screen: 'loading' });
   fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
     .then(r => r.json())
@@ -412,7 +413,11 @@ function loadAppData(email) {
         return;
       }
 
-      setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
+      if (showWelcome) {
+        setState({ screen: 'welcome', data: { ...data, currentRound, roundLocked } });
+      } else {
+        setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
+      }
     })
     .catch(() => {
       showToast('Failed to load data. Check connection.');
@@ -502,6 +507,11 @@ function render() {
 
   if (screen === 'notifications') {
     root.innerHTML = renderNotificationsScreen();
+    return;
+  }
+
+  if (screen === 'welcome') {
+    root.innerHTML = renderWelcomeScreen();
     return;
   }
 
@@ -665,11 +675,10 @@ async function submitRegistration() {
       return;
     }
 
-    // Registration successful — auto sign in
-    showToast('Welcome to the comp! 🎉');
+    // Registration successful — go to welcome screen
     saveSession(email, name);
-    setState({ user: { email, name }, registering: false, registerError: '' });
-    loadAppData(email);
+    setState({ user: { email, name }, registering: false, registerError: '', welcomeName: name });
+    loadAppData(email, true); // true = show welcome after load
 
   } catch {
     setState({ registering: false, registerError: 'Registration failed. Check your connection and try again.' });
@@ -1058,6 +1067,64 @@ async function saveUsername() {
   } catch {
     showToast('Failed to save. Try again.');
   }
+}
+
+function renderWelcomeScreen() {
+  const name = state.welcomeName || (state.data && state.data.currentUser ? state.data.currentUser.name : 'there');
+  return `
+    <div class="header">
+      <div class="header-top">
+        <div class="header-inner">
+          <img src="LMS (XL icon).png" class="header-logo" alt="LMS" />
+          <div>
+            <div class="header-title">Last Man Standing</div>
+            <div class="header-sub">NRL 2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="welcome-screen">
+      <div class="welcome-icon">🎉</div>
+      <div class="welcome-title">Welcome, <span class="welcome-name">${name}</span>!</div>
+      <div class="welcome-sub">You're registered. Stay on top of the comp by enabling notifications.</div>
+      <div class="welcome-card">
+        <div class="welcome-card-title">You'll be notified when</div>
+        <div class="welcome-item"><div class="welcome-item-emoji">🏉</div><div><strong>Round opens</strong> — team lists are out, time to tip</div></div>
+        <div class="welcome-item"><div class="welcome-item-emoji">⏰</div><div><strong>You haven't tipped</strong> — reminder before the round locks</div></div>
+        <div class="welcome-item"><div class="welcome-item-emoji">✅</div><div><strong>Your result is in</strong> — win or lose, you'll know instantly</div></div>
+      </div>
+      <button class="welcome-enable-btn" onclick="enableNotificationsAndContinue()">Enable notifications</button>
+      <button class="welcome-skip-btn" onclick="setState({screen:'app'})">Skip for now</button>
+    </div>
+  `;
+}
+
+async function enableNotificationsAndContinue() {
+  await requestPushPermission();
+
+  // Turn on all push notification preferences
+  if (state.data && state.data.currentUser) {
+    const cu = state.data.currentUser;
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'updateNotifications',
+        entrantID: cu.entrantID,
+        notifyRoundReminder_Email: cu.notifyRoundReminder_Email,
+        notifyRoundReminder_Push: true,
+        notifyMissedTip_Email: cu.notifyMissedTip_Email,
+        notifyMissedTip_Push: true,
+        notifyResult_Email: cu.notifyResult_Email,
+        notifyResult_Push: true,
+      })
+    });
+    // Update local state too
+    cu.notifyRoundReminder_Push = true;
+    cu.notifyMissedTip_Push = true;
+    cu.notifyResult_Push = true;
+  }
+
+  setState({ screen: 'app' });
 }
 
 function openNotifications() {
