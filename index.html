@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" href="LMS (XL icon).png" />
   <link rel="apple-touch-icon" href="LMS (XL icon).png" />
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1157,7 +1158,8 @@ function renderNotificationsScreen() {
       </div>
 
       <div style="padding: 0 1rem 1rem; font-size: 0.75rem; color: var(--gray-400);">
-        Push notifications require you to allow notifications in your browser when prompted.
+        Enabling push notifications will prompt your browser for permission.
+        <span style="color:#2E7D32;cursor:pointer;text-decoration:underline;" onclick="requestPushPermission()">Enable push now</span>
       </div>
     </div>
   `;
@@ -1223,6 +1225,40 @@ function clearSession() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadGoogle();
+
+// ── OneSignal push notifications ─────────────────────────────────────────────
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: '330c02cd-2f86-4c73-b96a-38d758ba05e9',
+    safari_web_id: 'web.onesignal.auto.4ddec2dc-5c48-40c7-bde8-da7159bee241',
+    notifyButton: { enable: false }, // we handle opt-in ourselves
+    welcomeNotification: { disable: true }
+  });
+
+  // After user is signed in and registered, save their OneSignal Player ID
+  OneSignal.on('subscriptionChange', async function(isSubscribed) {
+    if (isSubscribed && state.data && state.data.currentUser) {
+      const playerID = await OneSignal.getUserId();
+      if (playerID) {
+        fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'savePlayerID',
+            entrantID: state.data.currentUser.entrantID,
+            playerID
+          })
+        });
+      }
+    }
+  });
+});
+
+function requestPushPermission() {
+  if (typeof OneSignal !== 'undefined') {
+    OneSignal.showNativePrompt();
+  }
+}
 
 // Auto-login if session exists
 const saved = loadSession();
