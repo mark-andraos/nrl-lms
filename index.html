@@ -1115,7 +1115,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="rr-push" ${checked(cu.notifyRoundReminder_Push)} onchange="if(this.checked){requestPushPermission();}markNotifDirty();"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1132,7 +1132,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="mt-push" ${checked(cu.notifyMissedTip_Push)} onchange="if(this.checked){requestPushPermission();}markNotifDirty();"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1149,7 +1149,7 @@ function renderNotificationsScreen() {
             </div>
             <div class="notif-toggle-wrap">
               <div class="notif-toggle-label">PUSH</div>
-              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)} onchange="if(this.checked)requestPushPermission();markNotifDirty()"><span class="toggle-slider"></span></label>
+              <label class="toggle"><input type="checkbox" id="res-push" ${checked(cu.notifyResult_Push)} onchange="if(this.checked){requestPushPermission();}markNotifDirty();"><span class="toggle-slider"></span></label>
             </div>
           </div>
         </div>
@@ -1260,14 +1260,19 @@ OneSignalDeferred.push(async function(OneSignal) {
 });
 
 function requestPushPermission() {
-  if (_oneSignal) {
-    _oneSignal.showNativePrompt();
-  } else {
-    // Try via deferred queue as fallback
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(function(OneSignal) {
-      OneSignal.showNativePrompt();
-    });
+  try {
+    if (_oneSignal) {
+      _oneSignal.showNativePrompt();
+    } else if (window.OneSignal) {
+      window.OneSignal.showNativePrompt();
+    } else {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OS) {
+        OS.showNativePrompt();
+      });
+    }
+  } catch(e) {
+    console.error('Push permission error:', e);
   }
 }
 
