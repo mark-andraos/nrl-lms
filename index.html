@@ -911,7 +911,7 @@ function renderStandingsTab() {
     const isYou = cu && e.entrantID === cu.entrantID;
     return `<div class="standings-row ${isYou ? 'you' : ''}">
       <div class="standings-rank">${i + 1}</div>
-      <div class="standings-name">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div class="standings-name">${e.name}</div>
       <div>${getTipDisplay(e)}</div>
     </div>`;
   }).join('');
@@ -920,7 +920,7 @@ function renderStandingsTab() {
     const isYou = cu && e.entrantID === cu.entrantID;
     return `<div class="standings-row ${isYou ? 'you' : ''}" style="opacity:0.6">
       <div class="standings-rank">—</div>
-      <div class="standings-name" style="text-decoration:line-through">${e.name}${isYou ? '<span class="you-badge">you</span>' : ''}</div>
+      <div class="standings-name" style="text-decoration:line-through">${e.name}</div>
       <div><span class="pill pill-red">Out ${getElimRound(e)}</span></div>
     </div>`;
   }).join('');
