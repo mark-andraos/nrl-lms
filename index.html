@@ -1226,8 +1226,6 @@ function clearSession() {
 loadGoogle();
 
 // ── OneSignal push notifications ─────────────────────────────────────────────
-let _oneSignal = null;
-
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
@@ -1237,13 +1235,10 @@ OneSignalDeferred.push(async function(OneSignal) {
     welcomeNotification: { disable: true }
   });
 
-  // Store instance globally so requestPushPermission can access it
-  _oneSignal = OneSignal;
-
-  // After user opts in, save their Player ID to the sheet
-  OneSignal.on('subscriptionChange', async function(isSubscribed) {
-    if (isSubscribed && state.data && state.data.currentUser) {
-      const playerID = await OneSignal.getUserId();
+  // v16 API: listen for permission changes
+  OneSignal.Notifications.addEventListener('permissionChange', async function(permission) {
+    if (permission && state.data && state.data.currentUser) {
+      const playerID = await OneSignal.User.PushSubscription.id;
       if (playerID) {
         fetch(API_URL, {
           method: 'POST',
@@ -1261,16 +1256,23 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 function requestPushPermission() {
   try {
-    if (_oneSignal) {
-      _oneSignal.showNativePrompt();
-    } else if (window.OneSignal) {
-      window.OneSignal.showNativePrompt();
-    } else {
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(function(OS) {
-        OS.showNativePrompt();
-      });
-    }
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.Notifications.requestPermission();
+      // Save player ID after permission granted
+      const playerID = OneSignal.User.PushSubscription.id;
+      if (playerID && state.data && state.data.currentUser) {
+        fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'savePlayerID',
+            entrantID: state.data.currentUser.entrantID,
+            playerID
+          })
+        });
+        showToast('Push notifications enabled! ✓');
+      }
+    });
   } catch(e) {
     console.error('Push permission error:', e);
   }
