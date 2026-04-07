@@ -427,10 +427,16 @@ function loadAppData(email, showWelcome) {
         return;
       }
 
-      if (showWelcome) {
-        setState({ screen: 'welcome', data: { ...data, currentRound, roundLocked } });
+      const appData = { ...data, currentRound, roundLocked };
+
+      // Show welcome screen if:
+      // 1. Brand new registration (showWelcome flag), OR
+      // 2. Existing user with no OneSignal Player ID (hasn't opted in yet)
+      const noPlayerID = !data.currentUser.oneSignalPlayerID;
+      if (showWelcome || noPlayerID) {
+        setState({ screen: 'welcome', welcomeName: data.currentUser.name, data: appData });
       } else {
-        setState({ screen: 'app', data: { ...data, currentRound, roundLocked } });
+        setState({ screen: 'app', data: appData });
       }
     })
     .catch(() => {
