@@ -675,10 +675,18 @@ async function submitRegistration() {
       return;
     }
 
-    // Registration successful — go to welcome screen
+    // Registration successful — show welcome screen immediately, load data in background
     saveSession(email, name);
-    setState({ user: { email, name }, registering: false, registerError: '', welcomeName: name });
-    loadAppData(email, true); // true = show welcome after load
+    setState({ user: { email, name }, registering: false, registerError: '', welcomeName: name, screen: 'welcome' });
+    // Load data in background so it's ready when they continue
+    fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(data => {
+        const currentRound = getCurrentRound(data.matches);
+        const roundLocked = isRoundLocked(data.matches, currentRound);
+        state.data = { ...data, currentRound, roundLocked };
+      })
+      .catch(() => {});
 
   } catch {
     setState({ registering: false, registerError: 'Registration failed. Check your connection and try again.' });
