@@ -145,6 +145,7 @@
     .pill-green { background: var(--green-light); color: var(--green); }
     .pill-red { background: var(--red-light); color: var(--red); }
     .pill-amber { background: var(--amber-light); color: var(--amber); }
+    .pill-live { background: #ffeaea; color: #cc0000; }
     .pill-blue { background: #FEF9E7; color: #8a6d00; }
     .pill-gray { background: var(--gray-100); color: var(--gray-500); }
     .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
@@ -848,7 +849,7 @@ function renderRoundMatches() {
     if (isTrue(m.started)) {
       return `<div class="match-row">
         <div class="match-teams">${clean(m.home)} vs ${clean(m.away)}</div>
-        <div><span class="pill pill-amber">Live</span></div>
+        <div><span class="pill pill-live">🔴 Live</span></div>
       </div>`;
     }
     return `<div class="match-row">
