@@ -739,7 +739,13 @@ function renderTipTab() {
     aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
   } else if (bannerResult === 'Pending' || bannerResult === null) {
     // No result yet — show amber
-    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip submitted — round is open' : 'No tip yet — round is open'}</h3><p>${myTipForBanner ? 'You can update your tip until the first game kicks off' : 'Pick your team below'}</p></div></div>`;
+    if (data.roundLocked && myTipForBanner) {
+      aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>Tip locked in — awaiting result</h3></div></div>`;
+    } else if (data.roundLocked && !myTipForBanner) {
+      aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>No tip was submitted before the round locked</p></div></div>`;
+    } else {
+      aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip submitted — round is open' : 'No tip yet — round is open'}</h3><p>${myTipForBanner ? 'You can update your tip until the first game kicks off' : 'Pick your team below'}</p></div></div>`;
+    }
   } else {
     // Won or alive with no issue
     aliveHtml = `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`;
