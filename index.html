@@ -946,11 +946,14 @@ function renderStandingsTab() {
     return `<span class="pill ${pillClass}">${emoji} ${clean(tip.team)}</span>`;
   }
 
-  function getElimRound(entrant) {
-    // Find latest round they have a Lost result
-    const lostTips = data.tips.filter(t => t.entrantID === entrant.entrantID && getTipResult(t, data.matches) === 'Lost');
-    if (!lostTips.length) return '—';
-    return 'Rd ' + Math.max(...lostTips.map(t => t.round));
+  function getElimInfo(entrant) {
+    // Check results sheet for eliminated result
+    const elimResult = data.results
+      .filter(r => r.entrantID === entrant.entrantID && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
+      .sort((a, b) => b.round - a.round)[0];
+    if (!elimResult) return { round: '—', team: null };
+    const team = elimResult.tip && elimResult.tip !== 'No tip' ? elimResult.tip : null;
+    return { round: 'Rd ' + elimResult.round, team };
   }
 
   const aliveRows = alive.map((e, i) => {
@@ -964,10 +967,15 @@ function renderStandingsTab() {
 
   const elimRows = eliminated.map(e => {
     const isYou = cu && e.entrantID === cu.entrantID;
+    const elimInfo = getElimInfo(e);
+    const teamEmoji = elimInfo.team ? (data.teams.find(t => t.name === elimInfo.team)?.emoji || '') : '';
     return `<div class="standings-row ${isYou ? 'you' : ''}" style="opacity:0.6">
       <div class="standings-rank">—</div>
       <div class="standings-name" style="text-decoration:line-through">${e.name}</div>
-      <div><span class="pill pill-red">Out ${getElimRound(e)}</span></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <span class="pill pill-red">Out ${elimInfo.round}</span>
+        <span style="font-size:0.7rem;color:var(--gray-400);">${elimInfo.team ? `${teamEmoji} ${elimInfo.team}` : 'Missed tip'}</span>
+      </div>
     </div>`;
   }).join('');
 
