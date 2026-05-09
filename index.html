@@ -740,13 +740,19 @@ function renderTipTab() {
   const usedTeams = new Set(myTips.map(t => clean(t.team)));
 
   // Determine banner based on current round tip result, not just alive status
-  const myTipForBanner = data.tips.find(t => t.entrantID === cu.entrantID && t.round === data.currentRound);
+  const activeComp = (data.competitions || []).find(c => c.competitionID === data.activeCompID);
+  const compStartRound = activeComp ? activeComp.startRound : 1;
+  const roundIsInComp = data.currentRound >= compStartRound;
+  const myTipForBanner = roundIsInComp ? data.tips.find(t => t.entrantID === cu.entrantID && t.round === data.currentRound && String(t.competitionID) === String(data.activeCompID)) : null;
   const bannerResult = myTipForBanner ? getTipResult(myTipForBanner, data.matches) : null;
 
   let aliveHtml;
   if (!cu.alive) {
     // Eliminated
     aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+  } else if (!roundIsInComp) {
+    // Current round is before this comp started — show waiting message
+    aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>Comp starts Round ${compStartRound}</h3><p>Tips open from Round ${compStartRound}</p></div></div>`;
   } else if (bannerResult === 'Lost') {
     // Tip lost this round — show red even if alive flag not yet updated
     aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
@@ -785,8 +791,8 @@ function renderTipTab() {
     `;
   }
 
-  // Eliminated — no tip needed
-  if (!cu.alive) {
+  // Eliminated or round not yet in comp — no tip needed
+  if (!cu.alive || !roundIsInComp) {
     return `${aliveHtml}${renderRoundMatches()}`;
   }
 
