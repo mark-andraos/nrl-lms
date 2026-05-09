@@ -1042,6 +1042,13 @@ function renderStandingsTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function renderRulesTab() {
+  const { data } = state;
+  const activeComp = (data?.competitions || []).find(c => c.competitionID === data?.activeCompID);
+  const entryFee = activeComp?.entryFee;
+  const feeDisplay = entryFee === 0
+    ? `<span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span>`
+    : `$${entryFee} per person`;
+  const startRound = activeComp?.startRound ? `Round ${activeComp.startRound}` : '—';
   return `
     <div class="rules-wrap">
       <div class="rules-card">
@@ -1053,17 +1060,16 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>Each round, pick one NRL team — if they win, you survive</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot pick the same team twice in the same competition</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-green">💰</div>
           <div class="rules-card-title">The pot</div>
         </div>
-        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value"><span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span></span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value">${feeDisplay}</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Starts</span><span class="rules-pot-value">${startRound}</span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Prize</span><span class="rules-pot-value">Winner takes all</span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Reset</span><span class="rules-pot-value">Once a champion is crowned</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-amber">📝</div>
@@ -1075,7 +1081,6 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot tip a team that has a bye this round</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>Team selections reset when a new competition begins</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-red">🏁</div>
