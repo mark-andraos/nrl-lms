@@ -295,6 +295,13 @@
     .welcome-item-emoji { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
     .welcome-enable-btn { width: 100%; padding: 0.9rem; background: #F5C842; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; color: #111111; margin-bottom: 0.75rem; cursor: pointer; }
     .welcome-skip-btn { width: 100%; padding: 0.85rem; background: #ffffff; border: 2px solid #F5C842; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; color: #111111; cursor: pointer; }
+    /* Past comp cards */
+    .past-comp-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; }
+    .past-comp-card:active { opacity: 0.7; }
+    .past-comp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
+    .past-comp-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-900); }
+    .past-comp-chevron { font-size: 1.2rem; color: var(--gray-400); }
+    .past-comp-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--gray-500); }
   </style>
 </head>
 <body>
@@ -482,7 +489,7 @@ async function submitTip() {
         // Add new tip to local state
         state.data.tips.push({
           tipID: 'local-' + Date.now(),
-          competitionID: 'COMP001',
+          competitionID: state.data.activeCompID || 'COMP001',
           entrantID,
           email: user.email,
           round,
@@ -531,6 +538,11 @@ function render() {
     return;
   }
 
+  if (screen === 'pastComp') {
+    root.innerHTML = renderPastCompScreen();
+    return;
+  }
+
   if (screen === 'welcome') {
     root.innerHTML = renderWelcomeScreen();
     return;
@@ -557,7 +569,7 @@ function render() {
         <div class="header-inner">
           <img src="LMS (XL icon).png" class="header-logo" alt="LMS" />
           <div>
-          <div class="header-title">Last Man Standing</div>
+          <div class="header-title">${(data.competitions || []).find(c => c.competitionID === data.activeCompID)?.name || 'Last Man Standing'}</div>
           <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
         </div></div>
         <div class="dropdown-wrap">
@@ -723,7 +735,7 @@ function renderTipTab() {
     return `<div class="empty">You are not registered in this competition.<br>Contact the admin to be added.</div>`;
   }
 
-  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID);
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID && String(t.competitionID) === String(data.activeCompID));
   const myTipThisRound = myTips.find(t => t.round === data.currentRound);
   const usedTeams = new Set(myTips.map(t => clean(t.team)));
 
@@ -865,11 +877,11 @@ function renderHistoryTab() {
   const { data } = state;
   const cu = data.currentUser;
   if (!cu) return `<div class="empty">Not registered</div>`;
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
 
-  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID)
+  // Active comp tips
+  const myTips = data.tips.filter(t => t.entrantID === cu.entrantID && String(t.competitionID) === String(data.activeCompID))
     .sort((a, b) => b.round - a.round);
-
-  if (!myTips.length) return `<div class="empty">No tips submitted yet</div>`;
 
   const cards = myTips.map(tip => {
     const result = getTipResult(tip, data.matches);
@@ -895,8 +907,30 @@ function renderHistoryTab() {
   const won = myTips.filter(t => getTipResult(t, data.matches) === 'Won').length;
   const lost = myTips.filter(t => getTipResult(t, data.matches) === 'Lost').length;
 
+  // Past comps
+  const pastComps = (data.competitions || []).filter(c => c.status === 'Finished');
+  const pastCompCards = pastComps.map(comp => {
+    const winner = comp.winnerEntrantID
+      ? data.entrants.find(e => e.entrantID === comp.winnerEntrantID)
+      : null;
+    const winnerName = winner ? winner.name : 'Unknown';
+    const entrantCount = data.entrants.filter(e => String(e.competitionID) === String(comp.competitionID)).length;
+    return `<div class="past-comp-card" onclick="setState({screen:'pastComp', pastCompID:'${comp.competitionID}'})">
+      <div class="past-comp-header">
+        <div class="past-comp-name">${comp.name}</div>
+        <div class="past-comp-chevron">›</div>
+      </div>
+      <div class="past-comp-meta">
+        <span>🏆 ${winnerName}</span>
+        <span>${entrantCount} players · Rds ${comp.startRound}–${comp.endRound || '?'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
   return `
     <div class="section">
+      <div class="section-label">CURRENT COMP</div>
+      ${myTips.length ? `
       <div style="display:flex;gap:8px;margin-bottom:0.75rem;">
         <div style="flex:1;background:var(--green-light);border-radius:8px;padding:0.6rem;text-align:center;">
           <div style="font-size:1.1rem;font-weight:700;color:var(--green)">${won}</div>
@@ -911,8 +945,13 @@ function renderHistoryTab() {
           <div style="font-size:0.7rem;color:var(--gray-500)">Total</div>
         </div>
       </div>
-      ${cards}
+      ${cards}` : `<div class="empty" style="margin-bottom:1rem;">No tips submitted yet this comp</div>`}
     </div>
+    ${pastComps.length ? `
+    <div class="section">
+      <div class="section-label">PAST COMPS</div>
+      ${pastCompCards}
+    </div>` : ''}
   `;
 }
 
@@ -923,7 +962,9 @@ function renderStandingsTab() {
   const { currentRound, roundLocked } = data;
 
   const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
-  const alive = data.entrants
+  const activeCompID = data.activeCompID;
+  const compEntrants = data.entrants.filter(e => String(e.competitionID) === String(activeCompID));
+  const alive = compEntrants
     .filter(e => isTrue(e.alive))
     .sort((a, b) => {
       // Current user always first
@@ -932,12 +973,12 @@ function renderStandingsTab() {
       // Rest alphabetically
       return a.name.localeCompare(b.name);
     });
-  const eliminated = data.entrants
+  const eliminated = compEntrants
     .filter(e => !isTrue(e.alive))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   function getTipDisplay(entrant) {
-    const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound);
+    const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound && String(t.competitionID) === String(data.activeCompID));
     if (!tip) return '<span class="pill pill-gray">No tip</span>';
     if (!roundLocked) return '<span class="pill pill-amber">Tipped ✓</span>';
     const emoji = getTeamEmoji(data.teams, tip.team);
@@ -949,7 +990,7 @@ function renderStandingsTab() {
   function getElimInfo(entrant) {
     // Check results sheet for eliminated result
     const elimResult = data.results
-      .filter(r => r.entrantID === entrant.entrantID && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
+      .filter(r => r.entrantID === entrant.entrantID && String(r.competitionID) === String(data.activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
       .sort((a, b) => b.round - a.round)[0];
     if (!elimResult) return { round: '—', team: null };
     const team = elimResult.tip && elimResult.tip !== 'No tip' ? elimResult.tip : null;
@@ -1183,6 +1224,66 @@ async function enableNotificationsAndContinue() {
   }
 
   setState({ screen: 'app' });
+}
+
+function renderPastCompScreen() {
+  const { data, pastCompID } = state;
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
+  const comp = (data.competitions || []).find(c => c.competitionID === pastCompID);
+  if (!comp) return '<div class="empty">Comp not found</div>';
+
+  const compEntrants = data.entrants.filter(e => String(e.competitionID) === String(pastCompID));
+  const winner = comp.winnerEntrantID ? compEntrants.find(e => e.entrantID === comp.winnerEntrantID) : null;
+
+  const alive = compEntrants.filter(e => isTrue(e.alive)).sort((a, b) => a.name.localeCompare(b.name));
+  const eliminated = compEntrants.filter(e => !isTrue(e.alive)).sort((a, b) => a.name.localeCompare(b.name));
+
+  const aliveRows = alive.map((e, i) => {
+    const isWinner = comp.winnerEntrantID === e.entrantID;
+    return `<div class="standings-row">
+      <div class="standings-rank">${isWinner ? '🏆' : i + 1}</div>
+      <div class="standings-name">${e.name}${isWinner ? ' <span style="font-size:0.7rem;color:var(--amber);font-weight:600;">WINNER</span>' : ''}</div>
+      <div></div>
+    </div>`;
+  }).join('');
+
+  const elimRows = eliminated.map(e => {
+    const elimResult = data.results
+      .filter(r => r.entrantID === e.entrantID && String(r.competitionID) === String(pastCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
+      .sort((a, b) => b.round - a.round)[0];
+    const team = elimResult && elimResult.tip !== 'No tip' ? elimResult.tip : null;
+    const teamEmoji = team ? (data.teams.find(t => t.name === team)?.emoji || '') : '';
+    const round = elimResult ? 'Rd ' + elimResult.round : '—';
+    return `<div class="standings-row" style="opacity:0.6">
+      <div class="standings-rank">—</div>
+      <div class="standings-name" style="text-decoration:line-through">${e.name}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <span class="pill pill-red">Out ${round}</span>
+        <span style="font-size:0.7rem;color:var(--gray-400);">${team ? teamEmoji + ' ' + team : 'Missed tip'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="header">
+      <div class="header-top">
+        <button class="notif-back" onclick="setState({screen:'app', activeTab:'history'})">← Back</button>
+        <div style="flex:1;text-align:center;">
+          <div class="header-title">${comp.name}</div>
+          <div class="header-sub">Rds ${comp.startRound}–${comp.endRound || '?'} · ${compEntrants.length} players</div>
+        </div>
+        <div style="width:48px;"></div>
+      </div>
+    </div>
+    <div class="content">
+      ${winner ? `<div class="status-banner" style="background:#fff9e6;border:1.5px solid var(--amber);margin-bottom:1rem;">
+        <div class="status-banner-icon">🏆</div>
+        <div class="status-banner-text"><h3>${winner.name} won!</h3></div>
+      </div>` : ''}
+      ${alive.length ? `<div class="section-label" style="padding:0 1rem;">${alive.length} STILL ALIVE</div>${aliveRows}` : ''}
+      ${eliminated.length ? `<div class="section-label" style="padding:0.75rem 1rem 0;">${eliminated.length} ELIMINATED</div>${elimRows}` : ''}
+    </div>
+  `;
 }
 
 function openNotifications() {
