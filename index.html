@@ -981,7 +981,13 @@ function renderStandingsTab() {
     });
   const eliminated = compEntrants
     .filter(e => !isTrue(e.alive))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      const aResult = data.results.filter(r => r.entrantID === a.entrantID && String(r.competitionID) === String(activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true')).sort((x, y) => y.round - x.round)[0];
+      const bResult = data.results.filter(r => r.entrantID === b.entrantID && String(r.competitionID) === String(activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true')).sort((x, y) => y.round - x.round)[0];
+      const aRound = aResult ? aResult.round : 0;
+      const bRound = bResult ? bResult.round : 0;
+      return bRound - aRound || a.name.localeCompare(b.name);
+    });
 
   function getTipDisplay(entrant) {
     const tip = data.tips.find(t => t.entrantID === entrant.entrantID && t.round === currentRound && String(t.competitionID) === String(data.activeCompID));
