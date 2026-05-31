@@ -914,7 +914,7 @@ function renderHistoryTab() {
   const lost = myTips.filter(t => getTipResult(t, data.matches) === 'Lost').length;
 
   // Past comps
-  const pastComps = (data.competitions || []).filter(c => c.status === 'Finished');
+  const pastComps = (data.competitions || []).filter(c => c.status === 'Finished').sort((a, b) => (b.startRound || 0) - (a.startRound || 0));
   const pastCompCards = pastComps.map(comp => {
     const winner = comp.winnerEntrantID
       ? data.entrants.find(e => e.entrantID === comp.winnerEntrantID)
@@ -1042,13 +1042,6 @@ function renderStandingsTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function renderRulesTab() {
-  const { data } = state;
-  const activeComp = (data?.competitions || []).find(c => c.competitionID === data?.activeCompID);
-  const entryFee = activeComp?.entryFee;
-  const feeDisplay = entryFee === 0
-    ? `<span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span>`
-    : `$${entryFee} per person`;
-  const startRound = activeComp?.startRound ? `Round ${activeComp.startRound}` : '—';
   return `
     <div class="rules-wrap">
       <div class="rules-card">
@@ -1060,16 +1053,17 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>Each round, pick one NRL team — if they win, you survive</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot pick the same team twice in the same competition</span></div>
       </div>
+
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-green">💰</div>
           <div class="rules-card-title">The pot</div>
         </div>
-        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value">${feeDisplay}</span></div>
-        <div class="rules-pot-row"><span class="rules-pot-label">Starts</span><span class="rules-pot-value">${startRound}</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value"><span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span></span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Prize</span><span class="rules-pot-value">Winner takes all</span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Reset</span><span class="rules-pot-value">Once a champion is crowned</span></div>
       </div>
+
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-amber">📝</div>
@@ -1081,6 +1075,7 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot tip a team that has a bye this round</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>Team selections reset when a new competition begins</span></div>
       </div>
+
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-red">🏁</div>
@@ -1247,7 +1242,14 @@ function renderPastCompScreen() {
   const winner = comp.winnerEntrantID ? compEntrants.find(e => e.entrantID === comp.winnerEntrantID) : null;
 
   const alive = compEntrants.filter(e => isTrue(e.alive)).sort((a, b) => a.name.localeCompare(b.name));
-  const eliminated = compEntrants.filter(e => !isTrue(e.alive)).sort((a, b) => a.name.localeCompare(b.name));
+  const eliminated = compEntrants.filter(e => !isTrue(e.alive)).sort((a, b) => {
+    // Sort by elimination round descending (most recently eliminated first)
+    const aResult = data.results.filter(r => r.entrantID === a.entrantID && String(r.competitionID) === String(activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true')).sort((x, y) => y.round - x.round)[0];
+    const bResult = data.results.filter(r => r.entrantID === b.entrantID && String(r.competitionID) === String(activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true')).sort((x, y) => y.round - x.round)[0];
+    const aRound = aResult ? aResult.round : 0;
+    const bRound = bResult ? bResult.round : 0;
+    return bRound - aRound || a.name.localeCompare(b.name);
+  });
 
   const aliveRows = alive.map((e, i) => {
     const isWinner = comp.winnerEntrantID === e.entrantID;
@@ -1261,7 +1263,7 @@ function renderPastCompScreen() {
   const elimRows = eliminated.map(e => {
     const elimResult = data.results
       .filter(r => r.entrantID === e.entrantID && String(r.competitionID) === String(pastCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
-      .sort((a, b) => b.round - a.round)[0];
+      .sort((a, b) => a.round - b.round)[0];
     const team = elimResult && elimResult.tip !== 'No tip' ? elimResult.tip : null;
     const teamEmoji = team ? (data.teams.find(t => t.name === team)?.emoji || '') : '';
     const round = elimResult ? 'Rd ' + elimResult.round : '—';
