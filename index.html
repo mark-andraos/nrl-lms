@@ -749,7 +749,7 @@ function renderTipTab() {
   let aliveHtml;
   if (!cu.alive) {
     // Eliminated
-    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next time!</p></div></div>`;
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
   } else if (!roundIsInComp) {
     // Current round is before this comp started — show waiting message
     aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>Comp starts Round ${compStartRound}</h3><p>Tips open from Round ${compStartRound}</p></div></div>`;
@@ -1286,7 +1286,7 @@ function renderPastCompScreen() {
   return `
     <div class="header">
       <div class="header-top">
-        <button class="notif-back" onclick="setState({screen:'app', activeTab:'history'})">← Back</button>
+        <button class="notif-back" onclick="setState({screen:'app', tab:'history'})">← Back</button>
         <div style="flex:1;text-align:center;">
           <div class="header-title">${comp.name}</div>
           <div class="header-sub">Rds ${comp.startRound}–${comp.endRound || '?'} · ${compEntrants.length} players</div>
