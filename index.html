@@ -81,7 +81,6 @@
     .register-btn:disabled { background: #333; color: rgba(255,255,255,0.3); cursor: not-allowed; }
     .register-error { width: 100%; padding: 0.75rem; background: rgba(192,57,43,0.15); border-radius: var(--radius-sm); font-size: 0.82rem; color: #e74c3c; margin-bottom: 1rem; text-align: left; }
     /* Header */
-
     .header { padding: 0.75rem 1rem; border-bottom: 2px solid #F5C842; background: #111111; position: sticky; top: 0; z-index: 10; }
     .header-top { display: flex; align-items: center; justify-content: space-between; }
     .header-inner { display: flex; align-items: center; gap: 10px; }
@@ -89,8 +88,6 @@
     .header-title { font-size: 1rem; font-weight: 800; color: #F5C842; letter-spacing: -0.01em; }
     .header-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 1px; }
     .header-avatar { width: 34px; height: 34px; border-radius: 50%; background: #F5C842; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #111111; cursor: pointer; flex-shrink: 0; }
-
-    /* Avatar dropdown */
     .dropdown-wrap { position: relative; }
     .dropdown-menu { position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 50; overflow: hidden; }
     .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; font-size: 0.88rem; color: var(--gray-700); cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
@@ -101,8 +98,6 @@
     .dropdown-user { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); }
     .dropdown-user-name { font-size: 0.85rem; font-weight: 600; color: var(--gray-900); }
     .dropdown-user-email { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; }
-
-    /* Notifications screen */
     .notif-screen { flex: 1; overflow-y: auto; padding-bottom: 5rem; }
     .notif-header { padding: 1rem; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 10px; }
     .notif-back { background: none; border: none; font-size: 0.9rem; color: #F5C842; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600; }
@@ -125,8 +120,6 @@
     .toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
     .notif-save-btn { width: 100%; padding: 0.85rem; background: #F5C842; color: #111111; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; margin-top: 1rem; cursor: pointer; }
     .notif-save-btn:hover { background: #e6b800; }
-
-    /* Username modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
     .modal { background: #fff; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 360px; }
     .modal h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.35rem; }
@@ -139,8 +132,6 @@
     .modal-btn-save { background: #F5C842; color: #111111; }
     .modal-btn-cancel:hover { background: var(--gray-200); }
     .modal-btn-save:hover { background: #e6b800; }
-
-    /* Status pill */
     .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
     .pill-green { background: var(--green-light); color: var(--green); }
     .pill-red { background: var(--red-light); color: var(--red); }
@@ -152,14 +143,10 @@
     .dot-green { background: var(--green); }
     .dot-red { background: var(--red); }
     .dot-amber { background: var(--amber); }
-
-    /* Main content */
     .content { flex: 1; overflow-y: auto; padding-bottom: 5rem; }
     .section { padding: 1rem; }
     .section + .section { border-top: 1px solid var(--gray-100); }
     .section-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
-
-    /* Status banner */
     .status-banner { margin: 1rem; padding: 1rem; border-radius: var(--radius); display: flex; align-items: center; gap: 0.75rem; }
     .status-banner.alive { background: var(--green-light); }
     .status-banner.eliminated { background: var(--red-light); }
@@ -170,11 +157,7 @@
     .alive h3, .alive p { color: var(--green); }
     .eliminated h3, .eliminated p { color: var(--red); }
     .pending h3, .pending p { color: var(--amber); }
-
-    /* Lock notice */
     .lock-notice { margin: 0 1rem 0.75rem; padding: 0.65rem 0.85rem; background: var(--amber-light); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--amber); display: flex; align-items: center; gap: 6px; }
-
-    /* Team grid */
     .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .team-btn { border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.65rem 0.5rem; text-align: center; font-size: 0.8rem; color: var(--gray-700); background: #fff; cursor: pointer; transition: all 0.12s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .team-btn:hover:not(:disabled) { border-color: #F5C842; background: #FEF9E7; }
@@ -184,13 +167,9 @@
     .team-emoji { font-size: 1.2rem; }
     .team-name { font-size: 0.75rem; }
     .used-badge { font-size: 0.6rem; color: var(--gray-400); }
-
-    /* Submit button */
     .submit-btn { width: 100%; padding: 0.85rem; background: #F5C842; color: #111111; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; margin-top: 1rem; cursor: pointer; transition: background 0.15s; }
     .submit-btn:hover:not(:disabled) { background: #e6b800; }
     .submit-btn:disabled { background: var(--gray-300); cursor: not-allowed; color: #fff; }
-
-    /* Tip confirmed */
     .tip-confirmed { border-radius: var(--radius); padding: 1.25rem 1rem; text-align: center; border: 1.5px solid; }
     .tip-confirmed-won { background: var(--green-light); border-color: var(--green); }
     .tip-confirmed-won h3 { color: var(--green); }
@@ -202,14 +181,10 @@
     .tip-confirmed h3 { font-size: 1rem; font-weight: 700; margin-top: 0.25rem; }
     .tip-confirmed p { font-size: 0.8rem; margin-top: 0.15rem; }
     .change-tip-btn { margin-top: 0.75rem; font-size: 0.8rem; color: var(--amber); background: none; border: none; cursor: pointer; text-decoration: underline; }
-
-    /* History cards */
     .tip-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.6rem; }
     .tip-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
     .tip-card-team { font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .tip-card-match { font-size: 0.75rem; color: var(--gray-500); }
-
-    /* Standings */
     .standings-row { display: flex; align-items: center; gap: 10px; padding: 0.7rem 0; border-bottom: 1px solid var(--gray-100); }
     .standings-row:last-child { border-bottom: none; }
     .standings-row.you { background: var(--blue-light); margin: 0 -1rem; padding: 0.7rem 1rem; }
@@ -217,8 +192,6 @@
     .standings-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
     .standings-tip { font-size: 0.75rem; color: var(--gray-400); }
     .you-badge { font-size: 0.65rem; color: var(--blue); font-weight: 600; margin-left: 4px; }
-
-    /* Rules */
     .rules-wrap { padding: 1rem; }
     .rules-card { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 0.75rem; }
     .rules-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
@@ -243,34 +216,15 @@
     .outcome-emoji { font-size: 1rem; }
     .outcome-label { font-size: 0.75rem; font-weight: 700; color: var(--gray-700); margin: 3px 0 2px; }
     .outcome-desc { font-size: 0.7rem; color: var(--gray-500); line-height: 1.4; }
-
-    /* Bottom nav */
     .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111111; border-top: 2px solid #F5C842; display: flex; z-index: 20; padding-bottom: env(safe-area-inset-bottom); }
     .tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.5rem 0.25rem 0.4rem; font-size: 0.65rem; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; gap: 2px; transition: color 0.12s; }
     .tab.active { color: #F5C842; }
     .tab-icon { font-size: 1.2rem; }
-
-    /* Admin */
-    .admin-section { padding: 1rem; }
-    .admin-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
-    .admin-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 0.75rem; }
-    .admin-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .admin-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; font-size: 0.82rem; border-bottom: 1px solid var(--gray-100); }
-    .admin-row:last-child { border-bottom: none; }
-    .elim-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--red); color: var(--red); background: none; cursor: pointer; }
-    .elim-btn:hover { background: var(--red-light); }
-    .reinstate-btn { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--green); color: var(--green); background: none; cursor: pointer; }
-
-    /* Loading */
     .loading { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--gray-400); font-size: 0.85rem; }
     .spinner { width: 28px; height: 28px; border: 3px solid var(--gray-200); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Toast */
     .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%); background: var(--gray-900); color: #fff; padding: 0.6rem 1.2rem; border-radius: 20px; font-size: 0.82rem; font-weight: 500; z-index: 100; white-space: nowrap; animation: fadeInOut 3s forwards; }
     @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(8px)} 10%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0} }
-
-    /* Round matches */
     .match-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.8rem; }
     .match-row:last-child { border-bottom: none; }
     .match-teams { color: var(--gray-700); }
@@ -278,11 +232,7 @@
     .match-status { font-size: 0.7rem; color: var(--gray-400); }
     .match-winner { color: var(--green); font-weight: 600; }
     .match-loser { color: var(--gray-400); text-decoration: line-through; font-weight: 400; }
-
-    /* Empty state */
     .empty { text-align: center; padding: 2rem 1rem; color: var(--gray-400); font-size: 0.85rem; }
-
-    /* Welcome screen */
     .welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 2rem 1.5rem 1.5rem; text-align: center; overflow-y: auto; }
     .welcome-icon { font-size: 3rem; margin-bottom: 1rem; }
     .welcome-title { font-size: 1.2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.35rem; }
@@ -295,7 +245,6 @@
     .welcome-item-emoji { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
     .welcome-enable-btn { width: 100%; padding: 0.9rem; background: #F5C842; border: none; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 800; color: #111111; margin-bottom: 0.75rem; cursor: pointer; }
     .welcome-skip-btn { width: 100%; padding: 0.85rem; background: #ffffff; border: 2px solid #F5C842; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; color: #111111; cursor: pointer; }
-    /* Past comp cards */
     .past-comp-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; }
     .past-comp-card:active { opacity: 0.7; }
     .past-comp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
@@ -311,7 +260,6 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbxfwe51FBnnXy0N8btlDZcddwcsT_JlyLIVaiLZeWoFTngQvhot4su-tGJ-WmrDMqkR/exec';
 const ADMIN_EMAIL = 'andraos1992@gmail.com';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
 const clean = s => (s || '').trim();
 
 function getCurrentRound(matches) {
@@ -359,9 +307,8 @@ function initials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-// ── state ─────────────────────────────────────────────────────────────────────
 let state = {
-  screen: 'loading', // loading | auth | register | app
+  screen: 'loading',
   tab: 'tip',
   user: null,
   data: null,
@@ -388,7 +335,6 @@ function setState(patch) {
   render();
 }
 
-// ── Google Identity ───────────────────────────────────────────────────────────
 let googleReady = false;
 
 function loadGoogle() {
@@ -400,9 +346,7 @@ function loadGoogle() {
   document.head.appendChild(s);
 }
 
-function signInWithGoogle() {
-  devSignIn();
-}
+function signInWithGoogle() { devSignIn(); }
 
 function devSignIn() {
   const email = prompt('Enter your registered email address:');
@@ -414,7 +358,6 @@ function devSignIn() {
   loadAppData(trimmed);
 }
 
-// ── API ───────────────────────────────────────────────────────────────────────
 function loadAppData(email, showWelcome) {
   setState({ screen: 'loading' });
   fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
@@ -422,24 +365,12 @@ function loadAppData(email, showWelcome) {
     .then(data => {
       const currentRound = getCurrentRound(data.matches);
       const roundLocked = isRoundLocked(data.matches, currentRound);
-
-      // If not registered, send to register screen
       if (!data.currentUser) {
-        setState({
-          screen: 'register',
-          registerEmail: email,
-          registerName: '',
-          registerError: '',
-        });
+        setState({ screen: 'register', registerEmail: email, registerName: '', registerError: '' });
         showToast('Email not found — please register first');
         return;
       }
-
       const appData = { ...data, currentRound, roundLocked };
-
-      // Show welcome screen if:
-      // 1. Brand new registration (showWelcome flag), OR
-      // 2. Existing user with no OneSignal Player ID (hasn't opted in yet)
       const noPlayerID = !data.currentUser.oneSignalPlayerID;
       if (showWelcome || noPlayerID) {
         setState({ screen: 'welcome', welcomeName: data.currentUser.name, data: appData });
@@ -466,38 +397,28 @@ async function submitTip() {
         entrantID: data.currentUser.entrantID,
         round: data.currentRound,
         team: state.selectedTeam,
-        replaceTip: state.changingTip, // tell Apps Script to replace existing tip
+        replaceTip: state.changingTip,
       })
     });
     const result = await resp.json();
     if (result.error) { showToast(result.error); }
     else {
       showToast('Tip submitted! 🎉');
-
-      // Update local state immediately — no loading screen needed
       const round = data.currentRound;
       const entrantID = data.currentUser.entrantID;
       const team = state.selectedTeam;
-      const existingTipIndex = state.data.tips.findIndex(
-        t => t.entrantID === entrantID && t.round === round
-      );
+      const existingTipIndex = state.data.tips.findIndex(t => t.entrantID === entrantID && t.round === round);
       if (existingTipIndex >= 0) {
-        // Replace existing tip in local state
         state.data.tips[existingTipIndex].team = team;
         state.data.tips[existingTipIndex].timestamp = new Date().toISOString();
       } else {
-        // Add new tip to local state
         state.data.tips.push({
           tipID: 'local-' + Date.now(),
           competitionID: state.data.activeCompID || 'COMP001',
-          entrantID,
-          email: user.email,
-          round,
-          team,
+          entrantID, email: user.email, round, team,
           timestamp: new Date().toISOString()
         });
       }
-
       setState({ changingTip: false, selectedTeam: null, submitting: false });
       return;
     }
@@ -505,54 +426,25 @@ async function submitTip() {
   setState({ submitting: false });
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg) {
   setState({ toast: msg });
   setTimeout(() => setState({ toast: null }), 3200);
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
 function render() {
   const root = document.getElementById('root');
   const { screen, tab, user, data, toast } = state;
 
-  if (screen === 'loading') {
-    root.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
-    return;
-  }
+  if (screen === 'loading') { root.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`; return; }
+  if (screen === 'auth') { root.innerHTML = renderAuth(); attachAuthListeners(); return; }
+  if (screen === 'register') { root.innerHTML = renderRegister(); attachRegisterListeners(); return; }
+  if (screen === 'notifications') { root.innerHTML = renderNotificationsScreen(); return; }
+  if (screen === 'pastComp') { root.innerHTML = renderPastCompScreen(); return; }
+  if (screen === 'welcome') { root.innerHTML = renderWelcomeScreen(); return; }
 
-  if (screen === 'auth') {
-    root.innerHTML = renderAuth();
-    attachAuthListeners();
-    return;
-  }
-
-  if (screen === 'register') {
-    root.innerHTML = renderRegister();
-    attachRegisterListeners();
-    return;
-  }
-
-  if (screen === 'notifications') {
-    root.innerHTML = renderNotificationsScreen();
-    return;
-  }
-
-  if (screen === 'pastComp') {
-    root.innerHTML = renderPastCompScreen();
-    return;
-  }
-
-  if (screen === 'welcome') {
-    root.innerHTML = renderWelcomeScreen();
-    return;
-  }
-
-  // Save scroll position before re-render
   const contentEl = document.querySelector('.content');
   const scrollTop = contentEl ? contentEl.scrollTop : 0;
 
-  // App
   let mainContent = '';
   if (tab === 'tip') mainContent = renderTipTab();
   else if (tab === 'history') mainContent = renderHistoryTab();
@@ -569,9 +461,10 @@ function render() {
         <div class="header-inner">
           <img src="LMS (XL icon).png" class="header-logo" alt="LMS" />
           <div>
-          <div class="header-title">${(data.competitions || []).find(c => c.competitionID === data.activeCompID)?.name || 'Last Man Standing'}</div>
-          <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
-        </div></div>
+            <div class="header-title">${(data.competitions || []).find(c => c.competitionID === data.activeCompID)?.name || 'Last Man Standing'}</div>
+            <div class="header-sub">Round ${data.currentRound} · NRL 2026${data.roundLocked ? ' · 🔒 Locked' : ''}</div>
+          </div>
+        </div>
         <div class="dropdown-wrap">
           <div class="header-avatar" onclick="toggleDropdown()">${avatarLabel}</div>
           ${state.showDropdown ? `
@@ -609,19 +502,14 @@ function render() {
     </div>` : ''}
   `;
   attachAppListeners();
-
-  // Restore scroll position after re-render
   const newContentEl = document.querySelector('.content');
   if (newContentEl && scrollTop) newContentEl.scrollTop = scrollTop;
 }
 
-// ── Auth screen ───────────────────────────────────────────────────────────────
 function renderAuth() {
   return `
     <div class="auth-screen">
-      <div class="auth-logo-wrap">
-        <img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" />
-      </div>
+      <div class="auth-logo-wrap"><img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" /></div>
       <div class="auth-title-wrap">
         <div class="auth-title-line1">NRL Last Man</div>
         <div class="auth-title-line2">Standing</div>
@@ -650,15 +538,12 @@ function attachAuthListeners() {
   if (reg) reg.onclick = () => setState({ screen: 'register', registerName: '', registerEmail: '', registerError: '' });
 }
 
-// ── Register screen ──────────────────────────────────────────────────────────
 function renderRegister() {
   const { registerError, registering } = state;
   return `
     <div class="register-screen">
       <button class="register-back" onclick="setState({screen:'auth'})">← Back to sign in</button>
-      <div class="auth-logo-wrap">
-        <img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" />
-      </div>
+      <div class="auth-logo-wrap"><img src="LMS (XL icon).png" class="auth-logo" alt="LMS Logo" /></div>
       <div class="register-title">Join the competition</div>
       <div class="register-sub">NRL 2026 Last Man Standing</div>
       ${registerError ? `<div class="register-error">${registerError}</div>` : ''}
@@ -670,9 +555,7 @@ function renderRegister() {
         <label class="register-label">EMAIL ADDRESS</label>
         <input class="register-input" id="reg-email" type="email" placeholder="your@email.com" value="${state.registerEmail}" ${state.googleEmail ? 'readonly style="opacity:0.6"' : ''} />
       </div>
-      <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>
-        ${registering ? 'Registering...' : 'Register & Play'}
-      </button>
+      <button class="register-btn" id="reg-submit" ${registering ? 'disabled' : ''}>${registering ? 'Registering...' : 'Register & Play'}</button>
       <div class="auth-credit" style="margin-top:2rem;">App built by Mark Andraos</div>
     </div>
   `;
@@ -690,56 +573,36 @@ function attachRegisterListeners() {
 async function submitRegistration() {
   const name = state.registerName.trim();
   const email = state.registerEmail.trim().toLowerCase();
-
   if (!name) { setState({ registerError: 'Please enter your name.' }); return; }
   if (!email || !email.includes('@')) { setState({ registerError: 'Please enter a valid email address.' }); return; }
-
   setState({ registering: true, registerError: '' });
-
   try {
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'registerEntrant', name, email })
-    });
+    const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'registerEntrant', name, email }) });
     const result = await resp.json();
-
-    if (result.error) {
-      setState({ registering: false, registerError: result.error });
-      return;
-    }
-
-    // Registration successful — show welcome screen immediately, load data in background
+    if (result.error) { setState({ registering: false, registerError: result.error }); return; }
     saveSession(email, name);
     setState({ user: { email, name }, registering: false, registerError: '', welcomeName: name, screen: 'welcome' });
-    // Load data in background so it's ready when they continue
     fetch(`${API_URL}?action=getAppData&email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(data => {
         const currentRound = getCurrentRound(data.matches);
         const roundLocked = isRoundLocked(data.matches, currentRound);
         state.data = { ...data, currentRound, roundLocked };
-      })
-      .catch(() => {});
-
+      }).catch(() => {});
   } catch {
     setState({ registering: false, registerError: 'Registration failed. Check your connection and try again.' });
   }
 }
 
-// ── My Tip tab ────────────────────────────────────────────────────────────────
 function renderTipTab() {
   const { data, selectedTeam, submitting, changingTip } = state;
   const cu = data.currentUser;
-
-  if (!cu) {
-    return `<div class="empty">You are not registered in this competition.<br>Contact the admin to be added.</div>`;
-  }
+  if (!cu) return `<div class="empty">You are not registered in this competition.<br>Contact the admin to be added.</div>`;
 
   const myTips = data.tips.filter(t => t.entrantID === cu.entrantID && String(t.competitionID) === String(data.activeCompID));
   const myTipThisRound = myTips.find(t => t.round === data.currentRound);
   const usedTeams = new Set(myTips.map(t => clean(t.team)));
 
-  // Determine banner based on current round tip result, not just alive status
   const activeComp = (data.competitions || []).find(c => c.competitionID === data.activeCompID);
   const compStartRound = activeComp ? activeComp.startRound : 1;
   const roundIsInComp = data.currentRound >= compStartRound;
@@ -748,16 +611,12 @@ function renderTipTab() {
 
   let aliveHtml;
   if (!cu.alive) {
-    // Eliminated
-    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next season</p></div></div>`;
+    aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>You've been eliminated</h3><p>Better luck next time!</p></div></div>`;
   } else if (!roundIsInComp) {
-    // Current round is before this comp started — show waiting message
     aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>Comp starts Round ${compStartRound}</h3><p>Tips open from Round ${compStartRound}</p></div></div>`;
   } else if (bannerResult === 'Lost') {
-    // Tip lost this round — show red even if alive flag not yet updated
     aliveHtml = `<div class="status-banner eliminated"><div class="status-banner-icon">❌</div><div class="status-banner-text"><h3>Tip lost — you've been eliminated</h3><p>Your selection didn't get up this round</p></div></div>`;
   } else if (bannerResult === 'Pending' || bannerResult === null) {
-    // No result yet — show amber
     if (data.roundLocked && myTipForBanner) {
       aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>Tip locked in — awaiting result</h3></div></div>`;
     } else if (data.roundLocked && !myTipForBanner) {
@@ -766,11 +625,9 @@ function renderTipTab() {
       aliveHtml = `<div class="status-banner pending"><div class="status-banner-icon">⏳</div><div class="status-banner-text"><h3>${myTipForBanner ? 'Tip submitted — round is open' : 'No tip yet — round is open'}</h3><p>${myTipForBanner ? 'You can update your tip until the first game kicks off' : 'Pick your team below'}</p></div></div>`;
     }
   } else {
-    // Won or alive with no issue
     aliveHtml = `<div class="status-banner alive"><div class="status-banner-icon">✅</div><div class="status-banner-text"><h3>You're still alive!</h3><p>Keep picking winners to survive</p></div></div>`;
   }
 
-  // Already tipped and not changing
   if (myTipThisRound && !changingTip) {
     const result = getTipResult(myTipThisRound, data.matches);
     const emoji = getTeamEmoji(data.teams, myTipThisRound.team);
@@ -791,12 +648,10 @@ function renderTipTab() {
     `;
   }
 
-  // Eliminated or round not yet in comp — no tip needed
   if (!cu.alive || !roundIsInComp) {
     return `${aliveHtml}${renderRoundMatches()}`;
   }
 
-  // Round locked, no tip submitted
   if (data.roundLocked && !myTipThisRound) {
     return `
       ${aliveHtml}
@@ -805,12 +660,10 @@ function renderTipTab() {
     `;
   }
 
-  // Pick team
   const roundMatches = data.matches.filter(m => m.round === data.currentRound);
   const teamsPlayingThisRound = new Set(roundMatches.flatMap(m => [clean(m.home), clean(m.away)]));
   const isTrue2 = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
   const teamsAlreadyPlayed = new Set(roundMatches.filter(m => isTrue2(m.started)).flatMap(m => [clean(m.home), clean(m.away)]));
-
   const sortedTeams = [...data.teams].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const teamBtns = sortedTeams.map(t => {
@@ -878,27 +731,19 @@ function renderRoundMatches() {
   return `<div class="section"><div class="section-label">Round ${data.currentRound} fixtures</div>${rows}</div>`;
 }
 
-// ── History tab ───────────────────────────────────────────────────────────────
 function renderHistoryTab() {
   const { data } = state;
   const cu = data.currentUser;
   if (!cu) return `<div class="empty">Not registered</div>`;
-  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
 
-  // Active comp tips
   const myTips = data.tips.filter(t => t.entrantID === cu.entrantID && String(t.competitionID) === String(data.activeCompID))
     .sort((a, b) => b.round - a.round);
 
   const cards = myTips.map(tip => {
     const result = getTipResult(tip, data.matches);
     const emoji = getTeamEmoji(data.teams, tip.team);
-    const match = data.matches.find(m =>
-      m.round === tip.round &&
-      (clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team))
-    );
-    const matchStr = match
-      ? (match.finished ? `${clean(match.home)} ${match.homeScore}–${match.awayScore} ${clean(match.away)}` : `${clean(match.home)} vs ${clean(match.away)}`)
-      : '';
+    const match = data.matches.find(m => m.round === tip.round && (clean(m.home) === clean(tip.team) || clean(m.away) === clean(tip.team)));
+    const matchStr = match ? (match.finished ? `${clean(match.home)} ${match.homeScore}–${match.awayScore} ${clean(match.away)}` : `${clean(match.home)} vs ${clean(match.away)}`) : '';
     const pillClass = result === 'Won' ? 'pill-green' : result === 'Lost' ? 'pill-red' : result === 'Pending' ? 'pill-amber' : 'pill-gray';
     return `<div class="tip-card">
       <div class="tip-card-header">
@@ -913,12 +758,9 @@ function renderHistoryTab() {
   const won = myTips.filter(t => getTipResult(t, data.matches) === 'Won').length;
   const lost = myTips.filter(t => getTipResult(t, data.matches) === 'Lost').length;
 
-  // Past comps
   const pastComps = (data.competitions || []).filter(c => c.status === 'Finished').sort((a, b) => (b.startRound || 0) - (a.startRound || 0));
   const pastCompCards = pastComps.map(comp => {
-    const winner = comp.winnerEntrantID
-      ? data.entrants.find(e => e.entrantID === comp.winnerEntrantID)
-      : null;
+    const winner = comp.winnerEntrantID ? data.entrants.find(e => e.entrantID === comp.winnerEntrantID) : null;
     const winnerName = winner ? winner.name : 'Unknown';
     const entrantCount = data.entrants.filter(e => String(e.competitionID) === String(comp.competitionID)).length;
     return `<div class="past-comp-card" onclick="setState({screen:'pastComp', pastCompID:'${comp.competitionID}'})">
@@ -961,22 +803,18 @@ function renderHistoryTab() {
   `;
 }
 
-// ── Standings tab ─────────────────────────────────────────────────────────────
 function renderStandingsTab() {
   const { data } = state;
   const cu = data.currentUser;
   const { currentRound, roundLocked } = data;
-
   const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
   const activeCompID = data.activeCompID;
   const compEntrants = data.entrants.filter(e => String(e.competitionID) === String(activeCompID));
   const alive = compEntrants
     .filter(e => isTrue(e.alive))
     .sort((a, b) => {
-      // Current user always first
       if (cu && a.entrantID === cu.entrantID) return -1;
       if (cu && b.entrantID === cu.entrantID) return 1;
-      // Rest alphabetically
       return a.name.localeCompare(b.name);
     });
   const eliminated = compEntrants
@@ -1000,7 +838,6 @@ function renderStandingsTab() {
   }
 
   function getElimInfo(entrant) {
-    // Check results sheet for eliminated result
     const elimResult = data.results
       .filter(r => r.entrantID === entrant.entrantID && String(r.competitionID) === String(data.activeCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true'))
       .sort((a, b) => b.round - a.round)[0];
@@ -1046,8 +883,15 @@ function renderStandingsTab() {
   `;
 }
 
-// ── Rules tab ─────────────────────────────────────────────────────────────────
 function renderRulesTab() {
+  const { data } = state;
+  const activeComp = (data?.competitions || []).find(c => c.competitionID === data?.activeCompID);
+  const entryFee = activeComp?.entryFee;
+  const feeDisplay = Number(entryFee) === 0
+    ? `<span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span>`
+    : `$${entryFee} per person`;
+  const startRound = activeComp?.startRound ? `Round ${activeComp.startRound}` : '—';
+
   return `
     <div class="rules-wrap">
       <div class="rules-card">
@@ -1059,17 +903,16 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>Each round, pick one NRL team — if they win, you survive</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot pick the same team twice in the same competition</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-green">💰</div>
           <div class="rules-card-title">The pot</div>
         </div>
-        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value"><span style="text-decoration:line-through;opacity:0.4;font-weight:400;">$20 per person</span> <span style="color:var(--amber);font-weight:700;">Trial run</span></span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Entry fee</span><span class="rules-pot-value">${feeDisplay}</span></div>
+        <div class="rules-pot-row"><span class="rules-pot-label">Starts</span><span class="rules-pot-value">${startRound}</span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Prize</span><span class="rules-pot-value">Winner takes all</span></div>
         <div class="rules-pot-row"><span class="rules-pot-label">Reset</span><span class="rules-pot-value">Once a champion is crowned</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-amber">📝</div>
@@ -1081,7 +924,6 @@ function renderRulesTab() {
         <div class="rules-item"><div class="rules-bullet"></div><span>You cannot tip a team that has a bye this round</span></div>
         <div class="rules-item"><div class="rules-bullet"></div><span>Team selections reset when a new competition begins</span></div>
       </div>
-
       <div class="rules-card">
         <div class="rules-card-header">
           <div class="rules-card-icon rules-icon-red">🏁</div>
@@ -1098,7 +940,6 @@ function renderRulesTab() {
   `;
 }
 
-// ── Global actions ────────────────────────────────────────────────────────────
 function setTab(t) { setState({ tab: t }); }
 function selectTeam(name) { if (state.data.roundLocked) return; setState({ selectedTeam: name }); }
 function changeTip() { setState({ changingTip: true, selectedTeam: null }); }
@@ -1111,27 +952,19 @@ function signOut() {
 
 function toggleDropdown() {
   setState({ showDropdown: !state.showDropdown });
-  // Close on outside click
   if (!state.showDropdown) {
-    setTimeout(() => {
-      document.addEventListener('click', closeDropdownOutside, { once: true });
-    }, 0);
+    setTimeout(() => { document.addEventListener('click', closeDropdownOutside, { once: true }); }, 0);
   }
 }
 
 function closeDropdownOutside(e) {
-  if (!e.target.closest('.dropdown-wrap')) {
-    setState({ showDropdown: false });
-  }
+  if (!e.target.closest('.dropdown-wrap')) setState({ showDropdown: false });
 }
 
 function openUsernameModal() {
   const currentName = state.data && state.data.currentUser ? state.data.currentUser.name : '';
   setState({ showDropdown: false, showUsernameModal: true, usernameInput: currentName });
-  setTimeout(() => {
-    const input = document.getElementById('username-input');
-    if (input) { input.focus(); input.select(); }
-  }, 50);
+  setTimeout(() => { const input = document.getElementById('username-input'); if (input) { input.focus(); input.select(); } }, 50);
 }
 
 function closeUsernameModal(e) {
@@ -1142,27 +975,16 @@ async function saveUsername() {
   const name = state.usernameInput.trim();
   if (!name) { showToast('Please enter a name'); return; }
   if (!state.data || !state.data.currentUser) return;
-
   try {
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'updateUsername',
-        entrantID: state.data.currentUser.entrantID,
-        name
-      })
-    });
+    const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUsername', entrantID: state.data.currentUser.entrantID, name }) });
     const result = await resp.json();
     if (result.error) { showToast(result.error); return; }
-    // Update locally so UI reflects immediately without a reload
     state.data.currentUser.name = name;
     const entrant = state.data.entrants.find(e => e.entrantID === state.data.currentUser.entrantID);
     if (entrant) entrant.name = name;
     setState({ showUsernameModal: false });
     showToast('Username updated! ✓');
-  } catch {
-    showToast('Failed to save. Try again.');
-  }
+  } catch { showToast('Failed to save. Try again.'); }
 }
 
 function renderWelcomeScreen() {
@@ -1196,45 +1018,22 @@ function renderWelcomeScreen() {
 }
 
 function skipWelcome() {
-  if (state.data) {
-    setState({ screen: 'app' });
-  } else {
-    // Data not ready yet — wait for it then go to app
+  if (state.data) { setState({ screen: 'app' }); }
+  else {
     setState({ screen: 'loading' });
-    const interval = setInterval(() => {
-      if (state.data) {
-        clearInterval(interval);
-        setState({ screen: 'app' });
-      }
-    }, 200);
+    const interval = setInterval(() => { if (state.data) { clearInterval(interval); setState({ screen: 'app' }); } }, 200);
   }
 }
 
 async function enableNotificationsAndContinue() {
   await requestPushPermission();
-
-  // Turn on all push notification preferences
   if (state.data && state.data.currentUser) {
     const cu = state.data.currentUser;
-    fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'updateNotifications',
-        entrantID: cu.entrantID,
-        notifyRoundReminder_Email: cu.notifyRoundReminder_Email,
-        notifyRoundReminder_Push: true,
-        notifyMissedTip_Email: cu.notifyMissedTip_Email,
-        notifyMissedTip_Push: true,
-        notifyResult_Email: cu.notifyResult_Email,
-        notifyResult_Push: true,
-      })
-    });
-    // Update local state too
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateNotifications', entrantID: cu.entrantID, notifyRoundReminder_Email: cu.notifyRoundReminder_Email, notifyRoundReminder_Push: true, notifyMissedTip_Email: cu.notifyMissedTip_Email, notifyMissedTip_Push: true, notifyResult_Email: cu.notifyResult_Email, notifyResult_Push: true }) });
     cu.notifyRoundReminder_Push = true;
     cu.notifyMissedTip_Push = true;
     cu.notifyResult_Push = true;
   }
-
   setState({ screen: 'app' });
 }
 
@@ -1243,10 +1042,8 @@ function renderPastCompScreen() {
   const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
   const comp = (data.competitions || []).find(c => c.competitionID === pastCompID);
   if (!comp) return '<div class="empty">Comp not found</div>';
-
   const compEntrants = data.entrants.filter(e => String(e.competitionID) === String(pastCompID));
   const winner = comp.winnerEntrantID ? compEntrants.find(e => e.entrantID === comp.winnerEntrantID) : null;
-
   const alive = compEntrants.filter(e => isTrue(e.alive)).sort((a, b) => a.name.localeCompare(b.name));
   const eliminated = compEntrants.filter(e => !isTrue(e.alive)).sort((a, b) => {
     const aResult = data.results.filter(r => r.entrantID === a.entrantID && String(r.competitionID) === String(pastCompID) && (r.eliminated === true || r.eliminated === 'TRUE' || r.eliminated === 'true')).sort((x, y) => y.round - x.round)[0];
@@ -1325,12 +1122,8 @@ function renderNotificationsScreen() {
   const { data, toast } = state;
   const cu = data ? data.currentUser : null;
   if (!cu) return '<div class="empty">Not registered</div>';
-
   const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1;
-  const checked = (val) => {
-    const result = isTrue(val);
-    return result ? 'checked' : '';
-  };
+  const checked = (val) => isTrue(val) ? 'checked' : '';
 
   return `
     ${toast ? `<div class="toast">${toast}</div>` : ''}
@@ -1347,7 +1140,6 @@ function renderNotificationsScreen() {
     <div class="notif-screen">
       <div class="notif-section">
         <div class="notif-section-label">Notification preferences</div>
-
         <div class="notif-row">
           <div class="notif-row-left">
             <div class="notif-row-label">Round reminder</div>
@@ -1364,7 +1156,6 @@ function renderNotificationsScreen() {
             </div>
           </div>
         </div>
-
         <div class="notif-row">
           <div class="notif-row-left">
             <div class="notif-row-label">Missed tip warning</div>
@@ -1381,7 +1172,6 @@ function renderNotificationsScreen() {
             </div>
           </div>
         </div>
-
         <div class="notif-row">
           <div class="notif-row-left">
             <div class="notif-row-label">Tip result</div>
@@ -1398,10 +1188,8 @@ function renderNotificationsScreen() {
             </div>
           </div>
         </div>
-
         <button class="notif-save-btn" id="notif-save-btn" onclick="saveNotifications()" disabled style="background:var(--gray-300);color:#fff;cursor:not-allowed;">Save preferences</button>
       </div>
-
       <div style="padding: 0 1rem 1rem; font-size: 0.75rem; color: var(--gray-400);">
         Turning on push will prompt your browser for permission.
       </div>
@@ -1412,10 +1200,7 @@ function renderNotificationsScreen() {
 async function saveNotifications() {
   const cu = state.data.currentUser;
   if (!cu) return;
-
   const get = id => document.getElementById(id)?.checked || false;
-
-  // Grab values immediately
   const prefs = {
     notifyRoundReminder_Email: get('rr-email'),
     notifyRoundReminder_Push:  get('rr-push'),
@@ -1424,53 +1209,26 @@ async function saveNotifications() {
     notifyResult_Email:        get('res-email'),
     notifyResult_Push:         get('res-push'),
   };
-
-  // Update UI instantly
   const btn = document.getElementById('notif-save-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.style.background = 'var(--gray-300)';
-    btn.style.color = '#fff';
-    btn.style.cursor = 'not-allowed';
-    btn.textContent = 'Saved!';
-  }
-
-  // Update local state immediately
+  if (btn) { btn.disabled = true; btn.style.background = 'var(--gray-300)'; btn.style.color = '#fff'; btn.style.cursor = 'not-allowed'; btn.textContent = 'Saved!'; }
   Object.assign(cu, prefs);
   state.notifDirty = false;
   state.notifSaved = true;
-
-  // Save to sheet in background — user doesn't wait for this
-  fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateNotifications', entrantID: cu.entrantID, ...prefs })
-  })
-  .then(r => r.json())
-  .then(result => { if (result.error) showToast(result.error); })
-  .catch(() => showToast('Failed to save to server. Try again.'));
+  fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateNotifications', entrantID: cu.entrantID, ...prefs }) })
+    .then(r => r.json())
+    .then(result => { if (result.error) showToast(result.error); })
+    .catch(() => showToast('Failed to save to server. Try again.'));
 }
 
 function attachAppListeners() {}
 
-// ── Persistent login via localStorage ────────────────────────────────────────
 const STORAGE_KEY = 'nrl_lms_user';
+function saveSession(email, name) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, name })); } catch(e) {} }
+function loadSession() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } }
+function clearSession() { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} }
 
-function saveSession(email, name) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, name })); } catch(e) {}
-}
-
-function loadSession() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; }
-}
-
-function clearSession() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-}
-
-// ── Boot ──────────────────────────────────────────────────────────────────────
 loadGoogle();
 
-// ── OneSignal push notifications ─────────────────────────────────────────────
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
@@ -1479,20 +1237,11 @@ OneSignalDeferred.push(async function(OneSignal) {
     notifyButton: { enable: false },
     welcomeNotification: { disable: true }
   });
-
-  // v16 API: listen for permission changes
   OneSignal.Notifications.addEventListener('permissionChange', async function(permission) {
     if (permission && state.data && state.data.currentUser) {
       const playerID = await OneSignal.User.PushSubscription.id;
       if (playerID) {
-        fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'savePlayerID',
-            entrantID: state.data.currentUser.entrantID,
-            playerID
-          })
-        });
+        fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'savePlayerID', entrantID: state.data.currentUser.entrantID, playerID }) });
         showToast('Push notifications enabled! ✓');
       }
     }
@@ -1504,44 +1253,23 @@ function requestPushPermission() {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       const permission = OneSignal.Notifications.permission;
-
-      // If already granted, just get the player ID — no need to prompt again
       if (permission) {
         const playerID = OneSignal.User.PushSubscription.id;
         if (playerID && state.data && state.data.currentUser) {
-          fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-              action: 'savePlayerID',
-              entrantID: state.data.currentUser.entrantID,
-              playerID
-            })
-          });
+          fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'savePlayerID', entrantID: state.data.currentUser.entrantID, playerID }) });
         }
         return;
       }
-
-      // Otherwise request permission
       await OneSignal.Notifications.requestPermission();
       const playerID = OneSignal.User.PushSubscription.id;
       if (playerID && state.data && state.data.currentUser) {
-        fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'savePlayerID',
-            entrantID: state.data.currentUser.entrantID,
-            playerID
-          })
-        });
+        fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'savePlayerID', entrantID: state.data.currentUser.entrantID, playerID }) });
         showToast('Push notifications enabled! ✓');
       }
     });
-  } catch(e) {
-    console.error('Push permission error:', e);
-  }
+  } catch(e) { console.error('Push permission error:', e); }
 }
 
-// Auto-login if session exists
 const saved = loadSession();
 if (saved && saved.email) {
   setState({ user: saved, screen: 'loading' });
